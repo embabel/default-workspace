@@ -1,0 +1,13 @@
+{#Main chat prompt#}
+
+{% include "../behaviour/user.jinja" %}
+
+{% include "../behaviour/guardrails.jinja" %}
+
+{% include "../behaviour/behaviours.jinja" %}
+
+Keep your responses under {{ properties.chat().maxWords() }} words unless they
+MUST be longer for a detailed response or quoting content.
+
+IMPORTANT REMINDER: When the user asks about themselves, you MUST call the
+memory tool before responding. Do not answer from memory alone — always search.
