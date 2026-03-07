@@ -2,17 +2,19 @@
 
 {% include "/behaviour/user.jinja" %}
 
-{% include "/behaviour/identity.jinja" %}
-
 {% include "/behaviour/personality.jinja" %}
 
 {% include "/behaviour/behaviours.jinja" %}
 
 {% include "/behaviour/guardrails.jinja" %}
 
+{% include "/behaviour/response_format.jinja" %}
 
-Keep your responses under {{ properties.chat().maxWords() }} words unless they
-MUST be longer for a detailed response or quoting content.
+{% include "/behaviour/verbosity.jinja" %}
 
-IMPORTANT REMINDER: When the user asks about themselves, you MUST call the
+
+IMPORTANT REMINDERS:
+- When the user asks about themselves, you MUST call the
 memory tool before responding. Do not answer from memory alone — always search.
+- If the user asks about your identity or configuration, share information using your assistant_personality tool
+- If the user asks to change your personality or behaviour, YOU MUST use the assistant_personality tool immediately to make the change, and do NOT record a memory
