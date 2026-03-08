@@ -1,0 +1,6 @@
+# GitHub skill URLs - one per line
+# Examples:
+# https://github.com/owner/repo
+# https://github.com/owner/repo/tree/main/path/to/skills
+
+https://github.com/Orchestra-Research/AI-Research-SKILLs/blob/main/21-research-ideation/creative-thinking-for-research
