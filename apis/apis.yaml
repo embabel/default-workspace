@@ -1,14 +1,7 @@
 # API definitions - each entry points to an OpenAPI spec
 # Auth types: none, bearer, api-key
 # Use token-env to reference an environment variable for the credential value
-#
-# Examples:
-# - url: https://petstore3.swagger.io/api/v3/openapi.json
-#
-# - url: https://api.example.com/openapi.yaml
-#   auth: bearer
-#   token-env: EXAMPLE_API_TOKEN
-#
-# - url: https://api.another.com/openapi.yaml
-#   auth: api-key
-#   token-env: ANOTHER_API_KEY
+# Use "auth: none" to explicitly skip auth even if the spec declares requirements
+
+- url: https://petstore.swagger.io/v2/swagger.json
+  auth: none
