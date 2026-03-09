@@ -1,0 +1,8 @@
+name: morning-briefing
+cron: "0 0 9 * * MON-FRI"
+description: "Give me a brief morning briefing on the latest developments in AI agents, agentic frameworks, and LLM tooling. Focus on practical advances, new releases, and anything relevant to the Embabel project."
+event: research
+payload:
+  topic: "AI agents and agentic frameworks"
+  focus: "new releases, practical advances, open source projects"
+  style: concise

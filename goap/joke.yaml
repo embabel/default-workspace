@@ -1,0 +1,8 @@
+stepType: action
+name: joke
+description: "Tell a joke about a given subject"
+inputTypeNames:
+  - com.embabel.agent.domain.io.UserInput
+outputTypeName: com.embabel.agent.spec.model.BackgroundMessage
+canRerun: false
+prompt: "Tell a short, funny joke about: {{userInput.content}}"

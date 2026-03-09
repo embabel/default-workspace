@@ -1,0 +1,31 @@
+---
+stepType: "action"
+name: "cron-ping"
+description: "Say hello in chat"
+llm:
+  modelSelectionCriteria: null
+  model: null
+  role: null
+  temperature: null
+  frequencyPenalty: null
+  maxTokens: null
+  presencePenalty: null
+  topK: null
+  topP: null
+  thinking: null
+  timeout: null
+  criteria:
+    type: "DefaultModelSelectionCriteria"
+inputTypeNames: []
+outputTypeName: com.embabel.agent.spec.model.BackgroundMessage
+pre: []
+post: []
+cost: 0.0
+value: 0.0
+canRerun: false
+prompt: "Say hello in the chat, varying language. Choose one of French, English, German, Swedish, Danish, Italian, Spanish, Portuguese and Greek, at random."
+toolGroups: []
+tools: []
+references: []
+nullable: false
+stepType: "action"

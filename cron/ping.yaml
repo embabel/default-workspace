@@ -1,0 +1,5 @@
+---
+name: "ping"
+cron: "*/30 * * * * *"
+description: "Say hello in chat"
+actionName: "cron-ping"
