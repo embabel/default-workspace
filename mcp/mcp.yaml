@@ -1,0 +1,9 @@
+- name: fetch
+  description: "Fetch and extract content from URLs"
+  command: docker
+  args: ["run", "-i", "--rm", "mcp/fetch:latest"]
+
+- name: arxiv
+  description: "Search and read arXiv research papers"
+  command: docker
+  args: ["run", "-i", "--rm", "mcp/arxiv-mcp-server:latest"]
