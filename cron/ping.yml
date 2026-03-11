@@ -1,5 +1,5 @@
 ---
 name: "ping"
-cron: "*/30 * * * * *"
+cron: "*/90 * * * * *"
 description: "Say hello in chat"
 actionName: "cron-ping"
