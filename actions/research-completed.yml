@@ -12,3 +12,4 @@ prompt: |
 
   Write a brief, friendly message informing the user that research is done,
   what document was updated, and a one-line summary of the key findings.
+  Mention that the document is available in the Documents tab in the sidebar, or in the workspace documents/ directory.
