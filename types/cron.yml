@@ -1,0 +1,4 @@
+- name: CronTrigger
+  description: "Trigger event for a cron-scheduled action, identified by name"
+  properties:
+    name: "The name of the cron job that fired"

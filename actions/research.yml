@@ -2,11 +2,11 @@ stepType: action
 name: research
 description: "Research a topic using web search and available sources. Gather comprehensive findings with source links."
 inputTypeNames:
-  - com.embabel.agent.domain.io.UserInput
+  - ResearchRequest
 outputTypeName: ResearchResult
 canRerun: false
 prompt: |
-  Research the following topic thoroughly: {{userInput.content}}
+  Research the following topic thoroughly: {{researchRequest.topic}}
 
   Use the available search tools to find relevant, recent information.
   Compile your findings into a clear, well-structured markdown summary.

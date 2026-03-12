@@ -13,9 +13,21 @@
     name: "Name of the topic"
     keywords: "Related keywords and terms"
 
+- name: ResearchRequest
+  description: "A request to research a topic"
+  properties:
+    topic: "The topic to research"
+
 - name: ResearchResult
   description: "Results from researching a topic, including findings and sources"
   properties:
     topic: "The topic that was researched"
     content: "Detailed research findings in markdown"
     sources: "List of source URLs with brief descriptions, one per line"
+
+- name: ResearchCompleted
+  description: "Confirmation that research findings have been saved to a living document"
+  properties:
+    topic: "The topic that was researched"
+    documentName: "The name of the document that was updated or created"
+    summary: "Brief summary of what was done"
