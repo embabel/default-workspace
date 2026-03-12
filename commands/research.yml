@@ -1,0 +1,3 @@
+command: research
+actionName: research
+description: "Research a topic and update a living document with findings"

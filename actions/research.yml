@@ -1,0 +1,17 @@
+stepType: action
+name: research
+description: "Research a topic using web search and available sources. Gather comprehensive findings with source links."
+inputTypeNames:
+  - com.embabel.agent.domain.io.UserInput
+outputTypeName: ResearchResult
+canRerun: false
+prompt: |
+  Research the following topic thoroughly: {{userInput.content}}
+
+  Use the available search tools to find relevant, recent information.
+  Compile your findings into a clear, well-structured markdown summary.
+  Include all source URLs you referenced.
+tools:
+  - brave_search
+  - fetch
+  - arxiv

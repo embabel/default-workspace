@@ -12,3 +12,10 @@
   properties:
     name: "Name of the topic"
     keywords: "Related keywords and terms"
+
+- name: ResearchResult
+  description: "Results from researching a topic, including findings and sources"
+  properties:
+    topic: "The topic that was researched"
+    content: "Detailed research findings in markdown"
+    sources: "List of source URLs with brief descriptions, one per line"
