@@ -1,0 +1,6 @@
+- name: GitHubIssue
+  description: "A GitHub issue identified by owner, repo, and issue number"
+  properties:
+    owner: "Repository owner (user or organization)"
+    repo: "Repository name"
+    issue: "Issue number"

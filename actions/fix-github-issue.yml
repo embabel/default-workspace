@@ -1,0 +1,25 @@
+stepType: action
+name: fix-github-issue
+description: "Analyze a GitHub issue and attempt to fix it using Claude Code"
+inputTypeNames:
+  - GitHubIssue
+outputTypeName: com.embabel.agent.spec.model.BackgroundMessage
+prompt: |
+  You have been asked to fix GitHub issue #{{gitHubIssue.issue}}
+  in the repository {{gitHubIssue.owner}}/{{gitHubIssue.repo}}.
+
+  First, use the fetch tool to read the issue details from:
+  https://api.github.com/repos/{{gitHubIssue.owner}}/{{gitHubIssue.repo}}/issues/{{gitHubIssue.issue}}
+
+  Then summarize:
+  1. The issue title and description
+  2. Any labels or assignees
+  3. Your initial assessment of what needs to be done
+  4. Whether this looks like something that can be automated via Claude Code
+
+  Report your findings using the progress tool as you go.
+tools:
+  - fetch
+  - progress
+  - github
+  - brave-search
