@@ -1,0 +1,8 @@
+name: examples
+description: "Example APIs — Petstore (OpenAPI), xkcd (OpenAPI), Rick and Morty (GraphQL)"
+version: 0.1.0
+author: Embabel
+url: https://github.com/embabel/assistant
+tags:
+  - examples
+  - apis
