@@ -1,7 +1,0 @@
----
-name: "daily_research"
-cron: "0 * * * * *"
-description: "Tell a joke about a given subject"
-actionName: "joke"
-payload:
-  content: "mental health"

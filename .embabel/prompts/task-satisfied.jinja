@@ -1,0 +1,15 @@
+You just worked on a task. Review the result and determine if it is complete.
+
+## Task
+**{{ task_name }}**: {{ task_description }}
+
+{% if task_result %}
+## Result
+{{ task_result }}
+{% endif %}
+
+Use your tools to verify the task is complete if needed.
+
+You MUST end your response with exactly one of these verdicts on its own line:
+- SATISFIED: <brief reason why the task is complete>
+- NOT_SATISFIED: <what is still missing or incomplete>

@@ -1,0 +1,13 @@
+stepType: action
+name: list-ready-tasks
+description: "List tasks that are ready to work on — unblocked with all dependencies satisfied."
+inputTypeNames:
+  - UserInput
+outputTypeName: BackgroundMessage
+prompt: |
+  Use the tasks tool to find ready tasks.
+  Call ready_tasks to get the list of unblocked work items.
+  Present the results clearly, sorted by priority.
+  If there are no ready tasks, explain why (all done, all blocked, etc.).
+tools:
+  - tasks

@@ -13,6 +13,13 @@
 {% include "/behaviour/verbosity.jinja" %}
 
 
+{% if task_summary %}
+## Current Tasks
+{{ task_summary }}
+When you have in-flight or ready tasks, proactively work on them. Use your tools to make progress.
+If a task is ready and the user hasn't explicitly asked you to do something else, ask if they'd like you to start on the highest-priority ready task.
+{% endif %}
+
 IMPORTANT REMINDERS:
 - When the user asks about themselves, you MUST call the
 memory tool before responding. Do not answer from memory alone — always search.

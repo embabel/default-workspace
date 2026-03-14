@@ -1,7 +1,7 @@
-# API definitions - each entry points to an OpenAPI spec
-# Auth types: none, bearer, api-key
-# Use token-env to reference an environment variable for the credential value
-# Use "auth: none" to explicitly skip auth even if the spec declares requirements
-
-- url: https://petstore.swagger.io/v2/swagger.json
-  auth: none
+- url: "https://petstore.swagger.io/v2/swagger.json"
+  type: "openapi"
+  auth: "none"
+- url: "https://raw.githubusercontent.com/APIs-guru/openapi-directory/main/APIs/xkcd.com/1.0.0/openapi.yaml"
+  type: "openapi"
+- url: "https://rickandmortyapi.com/graphql"
+  type: "graphql"

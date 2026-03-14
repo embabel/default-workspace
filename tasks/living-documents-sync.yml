@@ -1,0 +1,12 @@
+name: living-documents-sync
+description: "Implement living documents with real-time sync between file system and graph"
+status: done
+priority: high
+tags:
+  - documents
+  - infrastructure
+depends_on: []
+context: |
+  Core infrastructure for the workspace document system.
+  File source is authoritative on startup, graph is the query layer.
+  Bidirectional sync with debounced file watching.

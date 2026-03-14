@@ -1,0 +1,13 @@
+name: multi-user-collab
+description: "Multi-user document collaboration with conflict resolution"
+status: backlog
+priority: medium
+tags:
+  - documents
+  - collaboration
+depends_on:
+  - living-documents-sync
+  - external-source-adapters
+context: |
+  Multiple users editing the same living documents.
+  Need conflict resolution strategy and real-time sync.

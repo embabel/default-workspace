@@ -1,0 +1,12 @@
+name: external-source-adapters
+description: "Integrate Google Drive, Notion, and other external sources as document adapters"
+status: backlog
+priority: high
+tags:
+  - integrations
+  - documents
+depends_on:
+  - living-documents-sync
+context: |
+  Need adapter interfaces that normalize external content into
+  the living documents format. Drive and Notion are top requests.
