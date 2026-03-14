@@ -14,3 +14,9 @@
   args: ["run", "-i", "--rm", "-e", "BRAVE_API_KEY", "mcp/brave-search"]
   env:
     BRAVE_API_KEY: ${BRAVE_API_KEY}
+
+- name: wikipedia
+  description: "Wikipedia search and content"
+  command: sh
+  args: [ "-c", "docker run -i --rm mcp/wikipedia-mcp | grep --line-buffered '^{'" ]
+
