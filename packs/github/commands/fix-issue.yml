@@ -1,3 +1,0 @@
-command: fix-issue
-actionName: triage-github-issue
-description: "Triage a GitHub issue and attempt to fix it if suitable"

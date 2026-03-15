@@ -1,6 +1,0 @@
-
-# Must be authenticated
-- name: github
-  description: "GitHub API"
-  command: docker
-  args: [ "run", "-i", "--rm", "-e", "GITHUB_PERSONAL_ACCESS_TOKEN", "ghcr.io/github/github-mcp-server" ]

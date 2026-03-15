@@ -1,3 +1,0 @@
-type: com.embabel.assistant.event.channel.telegram.TelegramChannelConfig
-name: telegram
-token-env: TELEGRAM_BOT_TOKEN
