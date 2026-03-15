@@ -1,25 +1,53 @@
-stepType: action
+stepType: com.embabel.agent.claudecode.ClaudeCodeAgentExecutor
 name: fix-github-issue
-description: "Analyze a GitHub issue and attempt to fix it using Claude Code"
+description: "Fix a triaged GitHub issue using Claude Code in a Docker sandbox, then push and create a PR"
 inputTypeNames:
-  - GitHubIssue
+  - TriagedIssue
 outputTypeName: com.embabel.agent.spec.model.BackgroundMessage
+defaultPermissionMode: DANGEROUSLY_SKIP_PERMISSIONS
+sandbox:
+  enabled: true
+  image: embabel/claude-code-sandbox:latest
+  memory: 2g
+  cpus: "2.0"
+  network: true
+  propagateEnv:
+    - ANTHROPIC_API_KEY
+  mapEnv:
+    GH_TOKEN: GITHUB_PERSONAL_ACCESS_TOKEN
 prompt: |
-  You have been asked to fix GitHub issue #{{gitHubIssue.issue}}
-  in the repository {{gitHubIssue.owner}}/{{gitHubIssue.repo}}.
+  Fix the following GitHub issue:
 
-  First, use the fetch tool to read the issue details from:
-  https://api.github.com/repos/{{gitHubIssue.owner}}/{{gitHubIssue.repo}}/issues/{{gitHubIssue.issue}}
+  ## Issue: {{triagedIssue.title}}
+  Repository: {{triagedIssue.owner}}/{{triagedIssue.repo}} (#{{triagedIssue.issue}})
+  Labels: {{triagedIssue.labels}}
 
-  Then summarize:
-  1. The issue title and description
-  2. Any labels or assignees
-  3. Your initial assessment of what needs to be done
-  4. Whether this looks like something that can be automated via Claude Code
+  ## Description
+  {{triagedIssue.body}}
 
-  Report your findings using the progress tool as you go.
-tools:
-  - fetch
-  - progress
-  - github
-  - brave-search
+  ## Triage Assessment
+  {{triagedIssue.assessment}}
+
+  ## Instructions
+  GitHub authentication is pre-configured via GH_TOKEN in the environment.
+  The `gh` CLI and `git push` will work automatically — do NOT run `gh auth login`.
+
+  1. Clone the repository:
+     git clone https://github.com/{{triagedIssue.owner}}/{{triagedIssue.repo}}.git /workspace/{{triagedIssue.repo}}
+     cd /workspace/{{triagedIssue.repo}}
+  2. Create a new branch named fix/issue-{{triagedIssue.issue}}
+  3. Make the minimal changes needed to address the issue
+  4. Run any relevant tests to verify the fix
+  5. Commit with a message that references #{{triagedIssue.issue}}
+  6. Push the branch to origin
+  7. Create a pull request using `gh pr create`:
+     - Title should reference the issue
+     - Body must clearly state this PR was created by **Embabel Me** (an AI assistant)
+     - Include a summary of what was changed and why
+     - Link the PR to issue #{{triagedIssue.issue}}
+     - Add the footer: "🤖 This PR was automatically created by [Embabel Me](https://embabel.com)"
+
+  IMPORTANT: You must push and create the PR before finishing.
+  The sandbox is ephemeral — any unpushed work will be lost.
+
+  When done, report the PR URL in your response.

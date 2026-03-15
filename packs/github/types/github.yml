@@ -4,3 +4,15 @@
     owner: "Repository owner (user or organization)"
     repo: "Repository name"
     issue: "Issue number"
+
+- name: TriagedIssue
+  description: "A GitHub issue that has been triaged and assessed for automated fixing"
+  properties:
+    owner: "Repository owner"
+    repo: "Repository name"
+    issue: "Issue number"
+    title: "Issue title"
+    body: "Issue body/description"
+    labels: "Comma-separated labels"
+    assessment: "Triage assessment — what needs to be done and how"
+    repoPath: "Local filesystem path to the repository clone"
