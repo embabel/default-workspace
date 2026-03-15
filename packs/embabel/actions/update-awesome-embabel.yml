@@ -1,0 +1,51 @@
+stepType: com.embabel.agent.claudecode.ClaudeCodeAgentExecutor
+name: update-awesome-embabel
+description: "Update the Awesome Embabel repo, then push and create a PR"
+inputTypeNames:
+  - UpdateAwesomeEmbabel
+outputTypeName: com.embabel.assistant.alert.Alert
+defaultPermissionMode: DANGEROUSLY_SKIP_PERMISSIONS
+sandbox:
+  enabled: true
+  image: embabel/claude-code-sandbox:latest
+  memory: 2g
+  cpus: "2.0"
+  network: true
+  propagateEnv:
+    - ANTHROPIC_API_KEY
+  mapEnv:
+    GH_TOKEN: GITHUB_PERSONAL_ACCESS_TOKEN
+prompt: |
+  Update the awesome embabel repository at embabel/awesome-embabel for the latest
+  resources that will benefit Embabel users.
+  
+  ## Instructions
+  GitHub authentication is pre-configured via GH_TOKEN in the environment.
+  The `gh` CLI and `git push` will work automatically — do NOT run `gh auth login`.
+
+  1. Clone the repository:
+     git clone https://github.com/embabel/awesome-embabel.git /workspace/{{triagedIssue.repo}}
+     cd /workspace/{{triagedIssue.repo}}
+  2. Create a new branch under update/{{updateAwesomeEmbabel.timestamp}}
+  3. Look at the last date and thoroughly use web search to find any new blogs, resources,
+  articles or tool releases related to Embabel since that date. Add any relevant new resources to the repo in the appropriate sections.
+  Check the resources if necessary to find that they are useful and positive.
+  
+  Most important sources:
+  - Rod Johnson blog on medium
+  - Any github projects using Embabel
+  4. Commit with an appropriate message
+  5. Push the branch to origin
+  6. Create a pull request using `gh pr create`:
+     - Title should be update and reference the date of the last update
+     - Body must clearly state this PR was created by **Embabel Me** (an AI assistant)
+     - Include a summary of what was changed and why
+     - Add the footer: "🤖 This PR was automatically created by [Embabel Me](https://embabel.com)"
+
+  IMPORTANT: You must push and create the PR before finishing.
+  The sandbox is ephemeral — any unpushed work will be lost.
+
+  When done, return the result as an Alert with:
+  - title: A short description like "PR: Update Awesome Embabel"
+  - source: "github"
+  - url: The PR URL (e.g. https://github.com/embabel/awesome-embabel/pull/123)

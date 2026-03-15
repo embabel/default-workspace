@@ -3,7 +3,7 @@ name: fix-github-issue
 description: "Fix a triaged GitHub issue using Claude Code in a Docker sandbox, then push and create a PR"
 inputTypeNames:
   - TriagedIssue
-outputTypeName: com.embabel.agent.spec.model.BackgroundMessage
+outputTypeName: com.embabel.assistant.alert.Alert
 defaultPermissionMode: DANGEROUSLY_SKIP_PERMISSIONS
 sandbox:
   enabled: true
@@ -50,4 +50,7 @@ prompt: |
   IMPORTANT: You must push and create the PR before finishing.
   The sandbox is ephemeral — any unpushed work will be lost.
 
-  When done, report the PR URL in your response.
+  When done, return the result as an Alert with:
+  - title: A short description like "PR: Fix <issue title>"
+  - source: "github"
+  - url: The PR URL (e.g. https://github.com/owner/repo/pull/123)

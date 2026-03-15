@@ -1,0 +1,16 @@
+stepType: action
+name: persist-alert
+description: "Persist an alert to the database so it appears in the UI"
+inputTypeNames:
+  - com.embabel.assistant.alert.Alert
+outputTypeName: com.embabel.agent.spec.model.BackgroundMessage
+prompt: |
+  Save this alert using the create_alert tool:
+  - Title: {{alert.title}}
+  - Source: {{alert.source}}
+  - URL: {{alert.url}}
+
+  After saving, confirm to the user that the alert was created.
+tools:
+  - alerts
+  - communicate
