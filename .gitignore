@@ -4,3 +4,6 @@
 # API credentials
 apis/credentials/
 *.env
+
+# Installed packs (each is its own git repo)
+packs/*/
