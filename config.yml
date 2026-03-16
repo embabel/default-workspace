@@ -1,5 +1,4 @@
 # Workspace configuration — overrides application.yml defaults.
-# Chat model and hyperparameters for LLM responses.
 chat:
-  # model: claude-sonnet-4-20250514
-  # temperature: 0.7
+  model: gpt-4.1-mini
+  temperature: 0.0
