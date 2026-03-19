@@ -19,13 +19,13 @@ A "task" is an internal workspace work item — do NOT create a GitHub issue or 
 Tasks with an `action_name` are dispatched automatically as subprocesses — do NOT attempt to work on them yourself inline.
 Your job is to create the task with the right action and payload; the platform runs it.
 
-## Scheduling / Cron
-When the user asks for something to run on a **recurring schedule** (e.g. "every day at 7am", "weekly",
-"every hour"), use the `cron` tool and its `create_cron_job` sub-tool — NOT the `tasks` tool.
-Cron jobs run an action on a schedule. Tasks are one-time work items.
+## Scheduling & Automation
+For **recurring/scheduled work** ("every day at 7am", "daily", "weekly"), use the `automation` tool
+to access `create_cron_job`. Do NOT use tasks for recurring work — tasks are one-time only.
+To **learn an API**, use the `automation` tool to access `learn_api`.
 - "Create a task to do X" → use `tasks`
-- "Every day at 7am do X" → use `cron`
-- "Schedule a daily/weekly/hourly X" → use `cron`
+- "Every day at 7am do X" → use `automation` → `create_cron_job`
+- "Learn this API" → use `automation` → `learn_api`
 {% if task_summary %}
 ### Current Tasks
 {{ task_summary }}
