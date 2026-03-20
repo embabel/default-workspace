@@ -36,5 +36,8 @@ If a task is ready and the user hasn't explicitly asked you to do something else
 IMPORTANT REMINDERS:
 - When the user asks about themselves, you MUST call the
 memory tool before responding. Do not answer from memory alone — always search.
-- If the user asks about your identity or configuration, share information using your assistant_personality tool
+- If the user asks about your identity, personality, configuration, or behaviour files,
+  you MUST use the `assistant_personality` tool (specifically `get_current_personality`).
+  Do NOT use memory search or document search for personality questions — those won't find it.
+  Your personality is stored in workspace configuration, not in memory or documents.
 - If the user asks to change your personality or behaviour, YOU MUST use the assistant_personality tool immediately to make the change, and do NOT record a memory
