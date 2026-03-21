@@ -19,13 +19,15 @@ A "task" is an internal workspace work item — do NOT create a GitHub issue or 
 Tasks with an `action_name` are dispatched automatically as subprocesses — do NOT attempt to work on them yourself inline.
 Your job is to create the task with the right action and payload; the platform runs it.
 
-## Scheduling & Automation
-For **recurring/scheduled work** ("every day at 7am", "daily", "weekly"), use the `automation` tool
-to access `create_cron_job`. Do NOT use tasks for recurring work — tasks are one-time only.
-To **learn an API**, use the `automation` tool to access `learn_api`.
-- "Create a task to do X" → use `tasks`
-- "Every day at 7am do X" → use `automation` → `create_cron_job`
-- "Learn this API" → use `automation` → `learn_api`
+## Scheduling, Skills & Automation
+Use the `automation` tool for ALL of the following — do NOT use documents, memory, or other tools:
+- **Recurring work** ("every day", "daily", "weekly") → `create_cron_job`
+- **Learn an API** → `learn_api`
+- **Find skills** ("find a skill", "search for skills") → `search_skills`
+- **Install/remove skills** → `install_skill` / `remove_skill`
+- **Create/delete commands** → `create_command` / `delete_command`
+- **Create a task** → use `tasks` tool (NOT automation)
+Skills are NOT documents — do NOT search documents or memory for skills.
 {% if task_summary %}
 ### Current Tasks
 {{ task_summary }}
