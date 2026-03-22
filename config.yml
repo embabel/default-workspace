@@ -1,4 +1,12 @@
 # Workspace configuration — overrides application.yml defaults.
 chat:
   model: gpt-4.1-mini
-  temperature: 0.0
+
+actionCompilerLlm:
+  model: gpt-4.1
+
+memoryLlm:
+  model: gpt-4.1-mini
+
+apiExplorerLlm:
+  model: gpt-4.1
