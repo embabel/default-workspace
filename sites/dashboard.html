@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Embabel Me — Dashboard</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0a0f; --surface: #13131a; --border: #1e1e2e;
+    --cyan: #63c0f5; --purple: #9f77cd; --amber: #e9b306;
+    --green: #3fd73c; --red: #ef4444; --dim: #6b7280; --text: #e5e7eb;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  .header { padding: 1.5rem 2rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 1rem; }
+  .header h1 { font-size: 1.4rem; color: var(--cyan); font-weight: 600; }
+  .header .subtitle { color: var(--dim); font-size: 0.85rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem; padding: 2rem; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; transition: border-color 0.2s; }
+  .card:hover { border-color: var(--purple); }
+  .card h2 { font-size: 1rem; color: var(--cyan); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+  .card h2 .icon { font-size: 1.2rem; }
+  .stat { font-size: 2.5rem; font-weight: 700; color: var(--text); line-height: 1; }
+  .stat-label { color: var(--dim); font-size: 0.8rem; margin-top: 0.25rem; }
+  .list { list-style: none; }
+  .list li { padding: 0.5rem 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; }
+  .list li:last-child { border-bottom: none; }
+  .badge { padding: 0.15rem 0.5rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; }
+  .badge-green { background: rgba(63,215,60,0.15); color: var(--green); }
+  .badge-amber { background: rgba(233,179,6,0.15); color: var(--amber); }
+  .badge-red { background: rgba(239,68,68,0.15); color: var(--red); }
+  .badge-purple { background: rgba(159,119,205,0.15); color: var(--purple); }
+  .cron-expr { font-family: 'SF Mono', 'Fira Code', monospace; color: var(--dim); font-size: 0.75rem; }
+  .apps-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.75rem; }
+  .app-tile { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; text-align: center; text-decoration: none; color: var(--text); transition: all 0.2s; }
+  .app-tile:hover { border-color: var(--cyan); transform: translateY(-2px); }
+  .app-tile .icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+  .app-tile .name { font-size: 0.8rem; }
+  .loading { color: var(--dim); font-style: italic; }
+  .error { color: var(--red); }
+  .refresh-btn { background: none; border: 1px solid var(--border); color: var(--dim); padding: 0.4rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; transition: all 0.2s; }
+  .refresh-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Embabel Me</h1>
+  <span class="subtitle" id="user-info">loading...</span>
+  <div style="flex:1"></div>
+  <button class="refresh-btn" onclick="loadAll()">Refresh</button>
+</div>
+
+<div class="grid">
+  <!-- Capabilities -->
+  <div class="card">
+    <h2><span class="icon">&#9881;</span> Capabilities</h2>
+    <div id="capabilities" class="loading">loading...</div>
+  </div>
+
+  <!-- Tasks -->
+  <div class="card">
+    <h2><span class="icon">&#9745;</span> Tasks</h2>
+    <div id="tasks" class="loading">loading...</div>
+  </div>
+
+  <!-- Cron Jobs -->
+  <div class="card">
+    <h2><span class="icon">&#9200;</span> Scheduled Jobs</h2>
+    <div id="cron" class="loading">loading...</div>
+  </div>
+
+  <!-- Apps -->
+  <div class="card">
+    <h2><span class="icon">&#9883;</span> Apps</h2>
+    <div id="apps" class="loading">loading...</div>
+  </div>
+
+  <!-- Models -->
+  <div class="card">
+    <h2><span class="icon">&#9672;</span> AI Models</h2>
+    <div id="models" class="loading">loading...</div>
+  </div>
+
+  <!-- Documents -->
+  <div class="card">
+    <h2><span class="icon">&#128196;</span> Documents</h2>
+    <div id="documents" class="loading">loading...</div>
+  </div>
+
+  <!-- Web Search (via Tool Gateway) -->
+  <div class="card" style="grid-column: 1 / -1;">
+    <h2><span class="icon">&#128269;</span> Web Search</h2>
+    <div style="display:flex;gap:0.5rem;margin-bottom:1rem;">
+      <input id="search-input" type="text" placeholder="Search the web..."
+        style="flex:1;padding:0.6rem 1rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:0.9rem;outline:none;"
+        onkeydown="if(event.key==='Enter')doSearch()">
+      <button onclick="doSearch()" style="padding:0.6rem 1.2rem;border:1px solid var(--cyan);border-radius:8px;background:rgba(99,192,245,0.1);color:var(--cyan);cursor:pointer;font-size:0.9rem;">Search</button>
+    </div>
+    <div id="search-results" class="loading">Enter a query to search using available tools</div>
+  </div>
+
+  <!-- Available Tools -->
+  <div class="card" style="grid-column: 1 / -1;">
+    <h2><span class="icon">&#128295;</span> Tool Gateway</h2>
+    <div id="tools-list" class="loading">loading...</div>
+  </div>
+</div>
+
+<script>
+const api = window.location.origin;
+
+async function get(path) {
+  const r = await fetch(api + path, { credentials: 'include' });
+  if (!r.ok) throw new Error(r.statusText);
+  return r.json();
+}
+
+function el(id) { return document.getElementById(id); }
+
+async function loadCapabilities() {
+  try {
+    const data = await get('/api/v1/workspace');
+    const skills = data.skills || [];
+    const actions = data.actions || [];
+    const tools = data.tools || [];
+    const commands = data.commands || [];
+    el('capabilities').innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+        <div><div class="stat">${skills.length}</div><div class="stat-label">Skills</div></div>
+        <div><div class="stat">${actions.length}</div><div class="stat-label">Actions</div></div>
+        <div><div class="stat">${tools.length}</div><div class="stat-label">Tools</div></div>
+        <div><div class="stat">${commands.length}</div><div class="stat-label">Commands</div></div>
+      </div>`;
+  } catch(e) { el('capabilities').innerHTML = `<span class="error">${e.message}</span>`; }
+}
+
+async function loadTasks() {
+  try {
+    const tasks = await get('/api/v1/tasks');
+    if (!tasks.length) { el('tasks').innerHTML = '<span class="loading">No tasks yet</span>'; return; }
+    const byStatus = {};
+    tasks.forEach(t => { byStatus[t.status] = (byStatus[t.status]||0) + 1; });
+    const statusBadge = s => {
+      const cls = { done:'badge-green', ready:'badge-amber', 'in-flight':'badge-purple', blocked:'badge-red' }[s] || 'badge-green';
+      return `<span class="badge ${cls}">${s}</span>`;
+    };
+    el('tasks').innerHTML = `
+      <div class="stat">${tasks.length}</div>
+      <div class="stat-label" style="margin-bottom:0.75rem;">total tasks</div>
+      <ul class="list">${Object.entries(byStatus).map(([s,c]) => `<li>${statusBadge(s)} <span>${c}</span></li>`).join('')}</ul>`;
+  } catch(e) { el('tasks').innerHTML = `<span class="error">${e.message}</span>`; }
+}
+
+async function loadCron() {
+  try {
+    const jobs = await get('/api/v1/cron');
+    if (!jobs.length) { el('cron').innerHTML = '<span class="loading">No jobs scheduled</span>'; return; }
+    el('cron').innerHTML = `<ul class="list">${jobs.map(j =>
+      `<li><div><strong>${j.name}</strong><br><span class="cron-expr">${j.cron}</span></div><span class="badge badge-purple">${j.actionName||'—'}</span></li>`
+    ).join('')}</ul>`;
+  } catch(e) { el('cron').innerHTML = `<span class="error">${e.message}</span>`; }
+}
+
+async function loadApps() {
+  try {
+    const apps = await get('/api/v1/artifacts/apps');
+    if (!apps.length) { el('apps').innerHTML = '<span class="loading">No apps yet — ask your assistant to build one!</span>'; return; }
+    el('apps').innerHTML = `<div class="apps-grid">${apps.map(a =>
+      `<a class="app-tile" href="${a.url}" target="_blank"><div class="icon">&#128187;</div><div class="name">${a.name.replace(/\.html$/,'')}</div></a>`
+    ).join('')}</div>`;
+  } catch(e) { el('apps').innerHTML = `<span class="error">${e.message}</span>`; }
+}
+
+async function loadModels() {
+  try {
+    const data = await get('/api/v1/config/models');
+    const models = data.models || data || [];
+    const current = data.currentModel || (models[0]?.name) || '—';
+    el('models').innerHTML = `
+      <div style="margin-bottom:0.5rem;"><strong style="color:var(--purple);">${current}</strong></div>
+      <div class="stat-label">${Array.isArray(models) ? models.length : 0} models available</div>`;
+  } catch(e) { el('models').innerHTML = `<span class="error">${e.message}</span>`; }
+}
+
+async function loadDocuments() {
+  try {
+    const data = await get('/api/v1/documents');
+    const docs = data.documents || data || [];
+    if (!docs.length) { el('documents').innerHTML = '<span class="loading">No documents ingested</span>'; return; }
+    el('documents').innerHTML = `
+      <div class="stat">${docs.length}</div>
+      <div class="stat-label" style="margin-bottom:0.75rem;">documents</div>
+      <ul class="list">${docs.slice(0,5).map(d =>
+        `<li>${d.title || d.name || d.uri || '—'}</li>`
+      ).join('')}${docs.length > 5 ? `<li class="loading">+${docs.length-5} more</li>` : ''}</ul>`;
+  } catch(e) { el('documents').innerHTML = `<span class="error">${e.message}</span>`; }
+}
+
+async function doSearch() {
+  const query = document.getElementById('search-input').value.trim();
+  if (!query) return;
+  const resultsEl = el('search-results');
+  resultsEl.innerHTML = '<span class="loading">Searching...</span>';
+  try {
+    const r = await fetch(api + '/api/v1/tools/brave_search', {
+      method: 'POST', credentials: 'include',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({query: query})
+    });
+    const data = await r.json();
+    if (data.error) {
+      // Try fetch tool as fallback
+      const r2 = await fetch(api + '/api/v1/tools/fetch', {
+        method: 'POST', credentials: 'include',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({url: 'https://www.google.com/search?q=' + encodeURIComponent(query)})
+      });
+      const data2 = await r2.json();
+      resultsEl.innerHTML = `<pre style="white-space:pre-wrap;color:var(--text);font-size:0.85rem;max-height:400px;overflow:auto;">${escapeHtml(data2.result || data.error)}</pre>`;
+    } else {
+      resultsEl.innerHTML = `<pre style="white-space:pre-wrap;color:var(--text);font-size:0.85rem;max-height:400px;overflow:auto;">${escapeHtml(data.result)}</pre>`;
+    }
+  } catch(e) {
+    resultsEl.innerHTML = `<span class="error">Search failed: ${e.message}</span>`;
+  }
+}
+
+function escapeHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function loadTools() {
+  try {
+    const spec = await get('/api/v1/tools');
+    const paths = spec.paths || {};
+    const tools = Object.entries(paths).map(([path, methods]) => {
+      const op = methods.post || {};
+      return { name: op.operationId || path, description: op.summary || '' };
+    });
+    if (!tools.length) { el('tools-list').innerHTML = '<span class="loading">No tools available</span>'; return; }
+    el('tools-list').innerHTML = `
+      <div class="stat-label" style="margin-bottom:0.75rem;">${tools.length} tools available via <a href="/api/v1/tools/ui" target="_blank" style="color:var(--cyan);">Swagger UI</a></div>
+      <ul class="list">${tools.slice(0,12).map(t =>
+        `<li><strong style="color:var(--purple);">${t.name}</strong><span style="color:var(--dim);font-size:0.8rem;">${t.description.substring(0,60)}</span></li>`
+      ).join('')}${tools.length > 12 ? `<li class="loading">+${tools.length-12} more</li>` : ''}</ul>`;
+  } catch(e) { el('tools-list').innerHTML = `<span class="error">${e.message}</span>`; }
+}
+
+function loadAll() {
+  loadCapabilities();
+  loadTasks();
+  loadCron();
+  loadApps();
+  loadModels();
+  loadDocuments();
+  loadTools();
+}
+
+loadAll();
+</script>
+</body>
+</html>
