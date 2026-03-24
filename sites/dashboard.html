@@ -40,6 +40,8 @@
   .error { color: var(--red); }
   .refresh-btn { background: none; border: 1px solid var(--border); color: var(--dim); padding: 0.4rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; transition: all 0.2s; }
   .refresh-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+  #search-results { max-height: 500px; overflow-y: auto; }
+  #search-results a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -203,27 +205,43 @@ async function doSearch() {
   const resultsEl = el('search-results');
   resultsEl.innerHTML = '<span class="loading">Searching...</span>';
   try {
-    const r = await fetch(api + '/api/v1/tools/brave_search', {
+    const r = await fetch(api + '/api/v1/tools/brave_web_search', {
       method: 'POST', credentials: 'include',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({query: query})
     });
     const data = await r.json();
     if (data.error) {
-      // Try fetch tool as fallback
-      const r2 = await fetch(api + '/api/v1/tools/fetch', {
-        method: 'POST', credentials: 'include',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({url: 'https://www.google.com/search?q=' + encodeURIComponent(query)})
-      });
-      const data2 = await r2.json();
-      resultsEl.innerHTML = `<pre style="white-space:pre-wrap;color:var(--text);font-size:0.85rem;max-height:400px;overflow:auto;">${escapeHtml(data2.result || data.error)}</pre>`;
-    } else {
-      resultsEl.innerHTML = `<pre style="white-space:pre-wrap;color:var(--text);font-size:0.85rem;max-height:400px;overflow:auto;">${escapeHtml(data.result)}</pre>`;
+      resultsEl.innerHTML = `<span class="error">${escapeHtml(data.error)}</span>`;
+      return;
     }
+    resultsEl.innerHTML = renderSearchResults(data.result);
   } catch(e) {
     resultsEl.innerHTML = `<span class="error">Search failed: ${e.message}</span>`;
   }
+}
+
+function renderSearchResults(raw) {
+  // Try to parse as JSON array of {text: "Title: ...\nDescription: ...\nURL: ..."}
+  try {
+    const items = JSON.parse(raw);
+    if (Array.isArray(items)) {
+      return items.map(item => {
+        const text = item.text || item.content || JSON.stringify(item);
+        const title = text.match(/Title:\s*(.*?)(?:\n|$)/)?.[1] || '';
+        const desc = text.match(/Description:\s*(.*?)(?:\n|$)/)?.[1] || '';
+        const url = text.match(/URL:\s*(.*?)(?:\n|$)/)?.[1] || '';
+        const cleanDesc = desc.replace(/<\/?strong>/g, '').replace(/&#x27;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&');
+        return `<div style="margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid var(--border);">
+          <a href="${escapeHtml(url)}" target="_blank" style="color:var(--cyan);text-decoration:none;font-weight:600;font-size:0.95rem;">${escapeHtml(title)}</a>
+          <div style="color:var(--dim);font-size:0.8rem;margin-top:0.15rem;">${escapeHtml(url)}</div>
+          <div style="color:var(--text);font-size:0.85rem;margin-top:0.4rem;line-height:1.4;">${escapeHtml(cleanDesc)}</div>
+        </div>`;
+      }).join('');
+    }
+  } catch(_) {}
+  // Fallback: render as preformatted text
+  return `<pre style="white-space:pre-wrap;color:var(--text);font-size:0.85rem;max-height:400px;overflow:auto;">${escapeHtml(raw)}</pre>`;
 }
 
 function escapeHtml(s) {
