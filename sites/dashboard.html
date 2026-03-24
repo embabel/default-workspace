@@ -15,6 +15,12 @@
   .header { padding: 1.5rem 2rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 1rem; }
   .header h1 { font-size: 1.4rem; color: var(--cyan); font-weight: 600; }
   .header .subtitle { color: var(--dim); font-size: 0.85rem; }
+  .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); padding: 0 2rem; }
+  .tab { padding: 0.75rem 1.25rem; cursor: pointer; color: var(--dim); font-size: 0.9rem; border-bottom: 2px solid transparent; transition: all 0.2s; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem; padding: 2rem; }
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; transition: border-color 0.2s; }
   .card:hover { border-color: var(--purple); }
@@ -40,73 +46,151 @@
   .error { color: var(--red); }
   .refresh-btn { background: none; border: 1px solid var(--border); color: var(--dim); padding: 0.4rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.8rem; transition: all 0.2s; }
   .refresh-btn:hover { border-color: var(--cyan); color: var(--cyan); }
-  #search-results { max-height: 500px; overflow-y: auto; }
-  #search-results a:hover { text-decoration: underline; }
+  .search-input { flex:1; padding:0.6rem 1rem; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text); font-size:0.9rem; outline:none; }
+  .search-input:focus { border-color: var(--cyan); }
+  .search-btn { padding:0.6rem 1.2rem; border:1px solid var(--cyan); border-radius:8px; background:rgba(99,192,245,0.1); color:var(--cyan); cursor:pointer; font-size:0.9rem; }
+  .search-btn:hover { background:rgba(99,192,245,0.2); }
+  .search-btn:disabled { opacity:0.5; cursor:not-allowed; }
+  .results-area { max-height: 500px; overflow-y: auto; }
+  .results-area a:hover { text-decoration: underline; }
+  .issue-card { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem; }
+  .issue-card:hover { border-color: var(--purple); }
+  .issue-title { color: var(--cyan); font-weight: 600; text-decoration: none; }
+  .issue-meta { color: var(--dim); font-size: 0.8rem; margin-top: 0.25rem; }
+  .issue-labels { display: flex; gap: 0.25rem; margin-top: 0.5rem; flex-wrap: wrap; }
+  .issue-label { padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600; }
+  .wiki-result { margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
+  .wiki-title { color: var(--cyan); font-weight: 600; font-size: 0.95rem; }
+  .wiki-extract { color: var(--text); font-size: 0.85rem; margin-top: 0.4rem; line-height: 1.5; }
 </style>
 </head>
 <body>
 
 <div class="header">
   <h1>Embabel Me</h1>
-  <span class="subtitle" id="user-info">loading...</span>
+  <span class="subtitle" id="user-info">Dashboard</span>
   <div style="flex:1"></div>
   <button class="refresh-btn" onclick="loadAll()">Refresh</button>
 </div>
 
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('overview')">Overview</div>
+  <div class="tab" onclick="switchTab('search')">Web Search</div>
+  <div class="tab" onclick="switchTab('github')">GitHub</div>
+  <div class="tab" onclick="switchTab('wikipedia')">Wikipedia</div>
+  <div class="tab" onclick="switchTab('tools')">Tools</div>
+</div>
+
+<!-- OVERVIEW TAB -->
+<div id="tab-overview" class="tab-content active">
 <div class="grid">
-  <!-- Capabilities -->
   <div class="card">
     <h2><span class="icon">&#9881;</span> Capabilities</h2>
     <div id="capabilities" class="loading">loading...</div>
   </div>
-
-  <!-- Tasks -->
   <div class="card">
     <h2><span class="icon">&#9745;</span> Tasks</h2>
     <div id="tasks" class="loading">loading...</div>
   </div>
-
-  <!-- Cron Jobs -->
   <div class="card">
     <h2><span class="icon">&#9200;</span> Scheduled Jobs</h2>
     <div id="cron" class="loading">loading...</div>
   </div>
-
-  <!-- Apps -->
   <div class="card">
     <h2><span class="icon">&#9883;</span> Apps</h2>
     <div id="apps" class="loading">loading...</div>
   </div>
-
-  <!-- Models -->
   <div class="card">
     <h2><span class="icon">&#9672;</span> AI Models</h2>
     <div id="models" class="loading">loading...</div>
   </div>
-
-  <!-- Documents -->
   <div class="card">
     <h2><span class="icon">&#128196;</span> Documents</h2>
     <div id="documents" class="loading">loading...</div>
   </div>
+</div>
+</div>
 
-  <!-- Web Search (via Tool Gateway) -->
+<!-- WEB SEARCH TAB -->
+<div id="tab-search" class="tab-content">
+<div class="grid">
   <div class="card" style="grid-column: 1 / -1;">
     <h2><span class="icon">&#128269;</span> Web Search</h2>
     <div style="display:flex;gap:0.5rem;margin-bottom:1rem;">
-      <input id="search-input" type="text" placeholder="Search the web..."
-        style="flex:1;padding:0.6rem 1rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:0.9rem;outline:none;"
-        onkeydown="if(event.key==='Enter')doSearch()">
-      <button onclick="doSearch()" style="padding:0.6rem 1.2rem;border:1px solid var(--cyan);border-radius:8px;background:rgba(99,192,245,0.1);color:var(--cyan);cursor:pointer;font-size:0.9rem;">Search</button>
+      <input id="search-input" type="text" placeholder="Search the web via Brave..." class="search-input"
+        onkeydown="if(event.key==='Enter')doWebSearch()">
+      <button onclick="doWebSearch()" class="search-btn">Search</button>
     </div>
-    <div id="search-results" class="loading">Enter a query to search using available tools</div>
+    <div id="search-results" class="results-area loading">Enter a query to search</div>
   </div>
+</div>
+</div>
 
-  <!-- Available Tools -->
+<!-- GITHUB TAB -->
+<div id="tab-github" class="tab-content">
+<div class="grid">
+  <div class="card" style="grid-column: 1 / -1;">
+    <h2><span class="icon">&#128025;</span> GitHub Issues</h2>
+    <div style="display:flex;gap:0.5rem;margin-bottom:1rem;">
+      <input id="gh-owner" type="text" placeholder="owner" class="search-input" style="flex:0.3" value="embabel">
+      <input id="gh-repo" type="text" placeholder="repo" class="search-input" style="flex:0.3" value="embabel-agent">
+      <select id="gh-state" class="search-input" style="flex:0.2">
+        <option value="open">Open</option>
+        <option value="closed">Closed</option>
+        <option value="all">All</option>
+      </select>
+      <button onclick="loadGitHubIssues()" class="search-btn">Load</button>
+    </div>
+    <div id="gh-issues" class="results-area loading">Enter a repo to load issues</div>
+  </div>
+  <div class="card" style="grid-column: 1 / -1;">
+    <h2><span class="icon">&#128200;</span> GitHub Search</h2>
+    <div style="display:flex;gap:0.5rem;margin-bottom:1rem;">
+      <input id="gh-search-input" type="text" placeholder="Search GitHub repos, code, issues..." class="search-input"
+        onkeydown="if(event.key==='Enter')doGitHubSearch()">
+      <button onclick="doGitHubSearch()" class="search-btn">Search</button>
+    </div>
+    <div id="gh-search-results" class="results-area loading">Search GitHub using installed tools</div>
+  </div>
+</div>
+</div>
+
+<!-- WIKIPEDIA TAB -->
+<div id="tab-wikipedia" class="tab-content">
+<div class="grid">
+  <div class="card" style="grid-column: 1 / -1;">
+    <h2><span class="icon">&#128214;</span> Wikipedia</h2>
+    <div style="display:flex;gap:0.5rem;margin-bottom:1rem;">
+      <input id="wiki-input" type="text" placeholder="Search Wikipedia..." class="search-input"
+        onkeydown="if(event.key==='Enter')doWikiSearch()">
+      <button onclick="doWikiSearch()" class="search-btn">Search</button>
+    </div>
+    <div id="wiki-results" class="results-area loading">Search Wikipedia articles</div>
+  </div>
+</div>
+</div>
+
+<!-- TOOLS TAB -->
+<div id="tab-tools" class="tab-content">
+<div class="grid">
   <div class="card" style="grid-column: 1 / -1;">
     <h2><span class="icon">&#128295;</span> Tool Gateway</h2>
+    <p style="color:var(--dim);font-size:0.85rem;margin-bottom:1rem;">
+      All workspace tools exposed as REST endpoints. Try them via
+      <a href="/api/v1/tools/ui" target="_blank" style="color:var(--cyan);">Swagger UI</a>.
+    </p>
     <div id="tools-list" class="loading">loading...</div>
   </div>
+  <div class="card" style="grid-column: 1 / -1;">
+    <h2><span class="icon">&#9889;</span> Try a Tool</h2>
+    <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem;">
+      <select id="tool-select" class="search-input" style="flex:0.4"><option>loading...</option></select>
+      <input id="tool-input" type="text" placeholder='{"key": "value"}' class="search-input" style="flex:0.6">
+      <button onclick="invokeTool()" class="search-btn">Run</button>
+    </div>
+    <div id="tool-result" class="results-area" style="margin-top:0.5rem;"></div>
+  </div>
+</div>
 </div>
 
 <script>
@@ -118,15 +202,36 @@ async function get(path) {
   return r.json();
 }
 
-function el(id) { return document.getElementById(id); }
+async function toolCall(name, input) {
+  const r = await fetch(api + '/api/v1/tools/' + name, {
+    method: 'POST', credentials: 'include',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(input)
+  });
+  return r.json();
+}
 
+function el(id) { return document.getElementById(id); }
+function escapeHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// Tab switching
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', t.textContent.trim().toLowerCase().replace(' ','') === name));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  const target = document.getElementById('tab-' + name);
+  if (target) target.classList.add('active');
+  // Fix tab highlighting
+  document.querySelectorAll('.tab').forEach(t => {
+    const map = {'overview':'overview','web search':'search','github':'github','wikipedia':'wikipedia','tools':'tools'};
+    t.classList.toggle('active', map[t.textContent.trim().toLowerCase()] === name);
+  });
+}
+
+// === OVERVIEW ===
 async function loadCapabilities() {
   try {
     const data = await get('/api/v1/workspace');
-    const skills = data.skills || [];
-    const actions = data.actions || [];
-    const tools = data.tools || [];
-    const commands = data.commands || [];
+    const skills = data.skills || [], actions = data.actions || [], tools = data.tools || [], commands = data.commands || [];
     el('capabilities').innerHTML = `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
         <div><div class="stat">${skills.length}</div><div class="stat-label">Skills</div></div>
@@ -167,7 +272,7 @@ async function loadCron() {
 async function loadApps() {
   try {
     const apps = await get('/api/v1/artifacts/apps');
-    if (!apps.length) { el('apps').innerHTML = '<span class="loading">No apps yet — ask your assistant to build one!</span>'; return; }
+    if (!apps.length) { el('apps').innerHTML = '<span class="loading">No apps yet</span>'; return; }
     el('apps').innerHTML = `<div class="apps-grid">${apps.map(a =>
       `<a class="app-tile" href="${a.url}" target="_blank"><div class="icon">&#128187;</div><div class="name">${a.name.replace(/\.html$/,'')}</div></a>`
     ).join('')}</div>`;
@@ -199,30 +304,19 @@ async function loadDocuments() {
   } catch(e) { el('documents').innerHTML = `<span class="error">${e.message}</span>`; }
 }
 
-async function doSearch() {
-  const query = document.getElementById('search-input').value.trim();
+// === WEB SEARCH ===
+async function doWebSearch() {
+  const query = el('search-input').value.trim();
   if (!query) return;
-  const resultsEl = el('search-results');
-  resultsEl.innerHTML = '<span class="loading">Searching...</span>';
+  el('search-results').innerHTML = '<span class="loading">Searching...</span>';
   try {
-    const r = await fetch(api + '/api/v1/tools/brave_web_search', {
-      method: 'POST', credentials: 'include',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({query: query})
-    });
-    const data = await r.json();
-    if (data.error) {
-      resultsEl.innerHTML = `<span class="error">${escapeHtml(data.error)}</span>`;
-      return;
-    }
-    resultsEl.innerHTML = renderSearchResults(data.result);
-  } catch(e) {
-    resultsEl.innerHTML = `<span class="error">Search failed: ${e.message}</span>`;
-  }
+    const data = await toolCall('brave_web_search', {query});
+    if (data.error) { el('search-results').innerHTML = `<span class="error">${escapeHtml(data.error)}</span>`; return; }
+    el('search-results').innerHTML = renderSearchResults(data.result);
+  } catch(e) { el('search-results').innerHTML = `<span class="error">${e.message}</span>`; }
 }
 
 function renderSearchResults(raw) {
-  // Try to parse as JSON array of {text: "Title: ...\nDescription: ...\nURL: ..."}
   try {
     const items = JSON.parse(raw);
     if (Array.isArray(items)) {
@@ -231,7 +325,7 @@ function renderSearchResults(raw) {
         const title = text.match(/Title:\s*(.*?)(?:\n|$)/)?.[1] || '';
         const desc = text.match(/Description:\s*(.*?)(?:\n|$)/)?.[1] || '';
         const url = text.match(/URL:\s*(.*?)(?:\n|$)/)?.[1] || '';
-        const cleanDesc = desc.replace(/<\/?strong>/g, '').replace(/&#x27;/g, "'").replace(/&quot;/g, '"').replace(/&amp;/g, '&');
+        const cleanDesc = desc.replace(/<\/?strong>/g,'').replace(/&#x27;/g,"'").replace(/&quot;/g,'"').replace(/&amp;/g,'&');
         return `<div style="margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid var(--border);">
           <a href="${escapeHtml(url)}" target="_blank" style="color:var(--cyan);text-decoration:none;font-weight:600;font-size:0.95rem;">${escapeHtml(title)}</a>
           <div style="color:var(--dim);font-size:0.8rem;margin-top:0.15rem;">${escapeHtml(url)}</div>
@@ -240,29 +334,141 @@ function renderSearchResults(raw) {
       }).join('');
     }
   } catch(_) {}
-  // Fallback: render as preformatted text
-  return `<pre style="white-space:pre-wrap;color:var(--text);font-size:0.85rem;max-height:400px;overflow:auto;">${escapeHtml(raw)}</pre>`;
+  return `<pre style="white-space:pre-wrap;color:var(--text);font-size:0.85rem;">${escapeHtml(raw)}</pre>`;
 }
 
-function escapeHtml(s) {
-  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+// === GITHUB ===
+async function loadGitHubIssues() {
+  const owner = el('gh-owner').value.trim();
+  const repo = el('gh-repo').value.trim();
+  const state = el('gh-state').value;
+  if (!owner || !repo) return;
+  el('gh-issues').innerHTML = '<span class="loading">Loading issues...</span>';
+  try {
+    const data = await toolCall('list_issues', {owner, repo, state, per_page: 15});
+    if (data.error) { el('gh-issues').innerHTML = `<span class="error">${escapeHtml(data.error)}</span>`; return; }
+    renderGitHubIssues(data.result);
+  } catch(e) { el('gh-issues').innerHTML = `<span class="error">${e.message}</span>`; }
 }
 
+function renderGitHubIssues(raw) {
+  try {
+    const issues = JSON.parse(raw);
+    if (Array.isArray(issues) && issues.length) {
+      el('gh-issues').innerHTML = issues.map(iss => {
+        const labels = (iss.labels||[]).map(l => {
+          const bg = l.color ? `#${l.color}33` : 'var(--border)';
+          const fg = l.color ? `#${l.color}` : 'var(--dim)';
+          return `<span class="issue-label" style="background:${bg};color:${fg};">${escapeHtml(l.name)}</span>`;
+        }).join('');
+        const date = iss.created_at ? new Date(iss.created_at).toLocaleDateString() : '';
+        return `<div class="issue-card">
+          <a href="${escapeHtml(iss.html_url||'')}" target="_blank" class="issue-title">#${iss.number} ${escapeHtml(iss.title)}</a>
+          <div class="issue-meta">by ${escapeHtml(iss.user?.login||'?')} · ${date} · ${iss.comments||0} comments</div>
+          ${labels ? `<div class="issue-labels">${labels}</div>` : ''}
+        </div>`;
+      }).join('');
+      return;
+    }
+  } catch(_) {}
+  el('gh-issues').innerHTML = `<pre style="white-space:pre-wrap;color:var(--text);font-size:0.85rem;">${escapeHtml(raw)}</pre>`;
+}
+
+async function doGitHubSearch() {
+  const query = el('gh-search-input').value.trim();
+  if (!query) return;
+  el('gh-search-results').innerHTML = '<span class="loading">Searching GitHub...</span>';
+  try {
+    const data = await toolCall('search_repositories', {query, per_page: 10});
+    if (data.error) { el('gh-search-results').innerHTML = `<span class="error">${escapeHtml(data.error)}</span>`; return; }
+    renderGitHubSearchResults(data.result);
+  } catch(e) { el('gh-search-results').innerHTML = `<span class="error">${e.message}</span>`; }
+}
+
+function renderGitHubSearchResults(raw) {
+  try {
+    const parsed = JSON.parse(raw);
+    const items = parsed.items || parsed;
+    if (Array.isArray(items) && items.length) {
+      el('gh-search-results').innerHTML = items.map(r => `<div class="issue-card">
+        <a href="${escapeHtml(r.html_url||'')}" target="_blank" class="issue-title">${escapeHtml(r.full_name||r.name)}</a>
+        <div class="issue-meta">${escapeHtml(r.description||'')} · ⭐ ${r.stargazers_count||0} · ${r.language||'?'}</div>
+      </div>`).join('');
+      return;
+    }
+  } catch(_) {}
+  el('gh-search-results').innerHTML = `<pre style="white-space:pre-wrap;color:var(--text);font-size:0.85rem;">${escapeHtml(raw)}</pre>`;
+}
+
+// === WIKIPEDIA ===
+async function doWikiSearch() {
+  const query = el('wiki-input').value.trim();
+  if (!query) return;
+  el('wiki-results').innerHTML = '<span class="loading">Searching Wikipedia...</span>';
+  try {
+    const data = await toolCall('search', {query, limit: 5});
+    if (data.error) {
+      // Try alternative tool name
+      const data2 = await toolCall('wikipedia_search', {query, limit: 5});
+      if (data2.error) { el('wiki-results').innerHTML = `<span class="error">${escapeHtml(data.error)}</span>`; return; }
+      renderWikiResults(data2.result);
+      return;
+    }
+    renderWikiResults(data.result);
+  } catch(e) { el('wiki-results').innerHTML = `<span class="error">${e.message}</span>`; }
+}
+
+function renderWikiResults(raw) {
+  try {
+    const items = JSON.parse(raw);
+    if (Array.isArray(items) && items.length) {
+      el('wiki-results').innerHTML = items.map(a => `<div class="wiki-result">
+        <div class="wiki-title">${escapeHtml(a.title)}</div>
+        <div class="wiki-extract">${escapeHtml((a.extract||a.snippet||a.description||'').substring(0,300))}</div>
+        ${a.url ? `<a href="${escapeHtml(a.url)}" target="_blank" style="color:var(--cyan);font-size:0.8rem;">Read more</a>` : ''}
+      </div>`).join('');
+      return;
+    }
+  } catch(_) {}
+  el('wiki-results').innerHTML = `<pre style="white-space:pre-wrap;color:var(--text);font-size:0.85rem;">${escapeHtml(raw)}</pre>`;
+}
+
+// === TOOLS ===
+let toolsList = [];
 async function loadTools() {
   try {
     const spec = await get('/api/v1/tools');
     const paths = spec.paths || {};
-    const tools = Object.entries(paths).map(([path, methods]) => {
+    toolsList = Object.entries(paths).map(([path, methods]) => {
       const op = methods.post || {};
-      return { name: op.operationId || path, description: op.summary || '' };
-    });
-    if (!tools.length) { el('tools-list').innerHTML = '<span class="loading">No tools available</span>'; return; }
+      return { name: op.operationId || path.split('/').pop(), description: op.summary || '', schema: op.requestBody };
+    }).sort((a,b) => a.name.localeCompare(b.name));
+    if (!toolsList.length) { el('tools-list').innerHTML = '<span class="loading">No tools available</span>'; return; }
     el('tools-list').innerHTML = `
-      <div class="stat-label" style="margin-bottom:0.75rem;">${tools.length} tools available via <a href="/api/v1/tools/ui" target="_blank" style="color:var(--cyan);">Swagger UI</a></div>
-      <ul class="list">${tools.slice(0,12).map(t =>
-        `<li><strong style="color:var(--purple);">${t.name}</strong><span style="color:var(--dim);font-size:0.8rem;">${t.description.substring(0,60)}</span></li>`
-      ).join('')}${tools.length > 12 ? `<li class="loading">+${tools.length-12} more</li>` : ''}</ul>`;
+      <div class="stat-label" style="margin-bottom:0.75rem;">${toolsList.length} tools available</div>
+      <ul class="list">${toolsList.map(t =>
+        `<li><strong style="color:var(--purple);">${escapeHtml(t.name)}</strong><span style="color:var(--dim);font-size:0.8rem;margin-left:0.5rem;">${escapeHtml(t.description.substring(0,80))}</span></li>`
+      ).join('')}</ul>`;
+    // Populate tool selector
+    const sel = el('tool-select');
+    sel.innerHTML = toolsList.map(t => `<option value="${escapeHtml(t.name)}">${escapeHtml(t.name)}</option>`).join('');
   } catch(e) { el('tools-list').innerHTML = `<span class="error">${e.message}</span>`; }
+}
+
+async function invokeTool() {
+  const name = el('tool-select').value;
+  const inputStr = el('tool-input').value.trim() || '{}';
+  if (!name) return;
+  el('tool-result').innerHTML = '<span class="loading">Running...</span>';
+  try {
+    const input = JSON.parse(inputStr);
+    const data = await toolCall(name, input);
+    if (data.error) {
+      el('tool-result').innerHTML = `<span class="error">${escapeHtml(data.error)}</span>`;
+    } else {
+      el('tool-result').innerHTML = `<pre style="white-space:pre-wrap;color:var(--text);font-size:0.85rem;max-height:400px;overflow:auto;">${escapeHtml(data.result)}</pre>`;
+    }
+  } catch(e) { el('tool-result').innerHTML = `<span class="error">${e.message}</span>`; }
 }
 
 function loadAll() {
