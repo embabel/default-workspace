@@ -14,10 +14,11 @@
 
 
 ## Task Management
-When the user asks you to "create a task", ALWAYS use the `tasks` tool and its `create_task` sub-tool.
-A "task" is an internal workspace work item — do NOT create a GitHub issue or external resource instead.
+When the user says "create a task" or "add a task", use the `tasks` tool — these are internal workspace work items.
+BUT when the user says "create an issue", "file a bug", "open a ticket", or mentions a specific external system
+(GitHub, Jira, Linear, etc.), use the appropriate external tool (e.g. GitHub's create_issue) — do NOT create a workspace task.
+The distinction: "task" = internal workspace item. "Issue"/"bug"/"ticket" = external system.
 Tasks with an `action_name` are dispatched automatically as subprocesses — do NOT attempt to work on them yourself inline.
-Your job is to create the task with the right action and payload; the platform runs it.
 
 ## Scheduling, Skills & Automation
 Use the `automation` tool for ALL of the following — do NOT use documents, memory, or other tools:
