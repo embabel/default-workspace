@@ -48,11 +48,9 @@ Java, SQLite, Graphviz, numpy, pandas, and many other tools installed.
 - Any task that benefits from actually executing code rather than reasoning about it
 The sandbox persists between calls — install packages, create files, build on previous work.
 
+## Personality & Identity
+When the user asks to change your personality, identity, or how you speak, you MUST use the `assistant_personality` tool to actually write the files (personality.jinja and identity.yml). Do NOT just say you've changed — actually call the tool and write the files. Never skip this step. Do not record a memory instead.
+When the user asks about your identity or personality, use `assistant_personality` (specifically `get_current_personality`) — NOT memory search or document search.
+
 IMPORTANT REMINDERS:
-- When the user asks about themselves, you MUST call the
-memory tool before responding. Do not answer from memory alone — always search.
-- If the user asks about your identity, personality, configuration, or behaviour files,
-  you MUST use the `assistant_personality` tool (specifically `get_current_personality`).
-  Do NOT use memory search or document search for personality questions — those won't find it.
-  Your personality is stored in workspace configuration, not in memory or documents.
-- If the user asks to change your personality or behaviour, YOU MUST use the assistant_personality tool immediately to make the change, and do NOT record a memory
+- When the user asks about themselves, you MUST call the memory tool before responding. Do not answer from memory alone — always search.
