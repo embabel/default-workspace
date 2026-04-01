@@ -2,3 +2,5 @@
 # Each entry is a git repo to clone into packs/{name}.
 - name: research
   repo: https://github.com/johnsonr/pack-research.git
+- name: github
+  repo: https://github.com/johnsonr/pack-github.git
