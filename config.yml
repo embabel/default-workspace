@@ -1,4 +1,6 @@
 # Workspace configuration — overrides application.yml defaults.
+version: 1
+
 chat:
   model: gpt-4.1-mini
 
