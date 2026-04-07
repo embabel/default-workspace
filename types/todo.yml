@@ -1,0 +1,9 @@
+- name: Todo
+  description: A task to complete — supports due dates, priorities, and tags
+  properties:
+    title: Title of the task
+    due: Due date (e.g., 2026-04-10, tomorrow, next Friday)
+    priority: Priority level — LOW, MEDIUM, or HIGH
+    done: Whether the task is complete (true/false)
+    tags: Comma-separated tags (e.g., work, personal, urgent)
+    notes: Additional notes or context
