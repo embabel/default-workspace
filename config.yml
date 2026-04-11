@@ -12,3 +12,16 @@ memoryLlm:
 
 apiExplorerLlm:
   model: gpt-4.1
+
+toolRouterLlm:
+  model: gpt-4.1-mini
+
+# Vibe coder (app builder) — primary and fallback coding LLM. These are set
+# explicitly so the Settings > App Builder UI shows them as the current value
+# rather than "System default". Override per workspace if you want different
+# models or tuning.
+codingLlm:
+  model: claude-sonnet-4-6
+fallbackCodingLlm:
+  model: claude-opus-4-6
+# codingModelFallbackAfterFailures: 2
