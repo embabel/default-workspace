@@ -2,9 +2,12 @@
 
 User-owned content. **Everything under `data/` survives a factory reset.**
 
-The rest of the workspace (config files, behaviour, commands, cron jobs, learned APIs,
-installed packs, skills, etc.) is "config" — it gets wiped and reseeded from the
-default-workspace template when you reset. This directory is not.
+The workspace is split in two at the top level:
+
+- **`config/`** holds everything that defines how the assistant behaves —
+  behaviour, commands, cron jobs, learned APIs, installed packs, skills, types,
+  channels, webhooks, etc. Reset wipes and reseeds this from the default-workspace template.
+- **`data/`** (this directory) holds your stuff. Reset doesn't touch it.
 
 Layout:
 
