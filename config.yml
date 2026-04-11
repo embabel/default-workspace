@@ -22,6 +22,8 @@ toolRouterLlm:
 # models or tuning.
 codingLlm:
   model: claude-sonnet-4-6
+  # timeout: 3m   # override if vibe coder times out on complex apps
 fallbackCodingLlm:
   model: claude-opus-4-6
+  # timeout: 5m
 # codingModelFallbackAfterFailures: 2
