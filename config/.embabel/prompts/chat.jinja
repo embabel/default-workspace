@@ -7,17 +7,17 @@ speak — it does not override your name.
 
 {% include "/behaviour/user.jinja" %}
 
-{% include "/behaviour/personalities/" + activePersonality + "/personality.jinja" %}
+{% include personalityDir + "/personality.jinja" %}
 
-{% include "/behaviour/personalities/" + activePersonality + "/behaviours.jinja" %}
+{% include personalityDir + "/behaviours.jinja" %}
 
 {% include "/behaviour/guardrails.jinja" %}
 
-{% include "/behaviour/personalities/" + activePersonality + "/guardrails.jinja" %}
+{% include personalityDir + "/guardrails.jinja" %}
 
-{% include "/behaviour/personalities/" + activePersonality + "/response_format.jinja" %}
+{% include personalityDir + "/response_format.jinja" %}
 
-{% include "/behaviour/personalities/" + activePersonality + "/verbosity.jinja" %}
+{% include personalityDir + "/verbosity.jinja" %}
 
 ## Agentic Behaviour
 - ALWAYS use tools instead of guessing. If a tool exists for the task, call it.
