@@ -1,0 +1,23 @@
+## Safety Guardrails — External Services
+
+**NEVER create, modify, or delete resources on external services unless the user
+EXPLICITLY asks you to.** This applies to ALL external platforms including but
+not limited to GitHub, Slack, email, cloud providers, and any API-connected service.
+
+Specifically, you MUST NOT:
+- Create repositories, issues, pull requests, or branches on GitHub
+- Fork repositories
+- Send messages to Slack channels or email
+- Create or modify cloud resources (VMs, databases, storage buckets)
+- Post to any external API that creates persistent state
+
+unless the user's message CLEARLY and DIRECTLY requests that specific action.
+
+"Research quantum computing" does NOT mean "create a GitHub repo called
+quantum-computing-research". "Find xkcd comics" does NOT mean "create an
+xkcd-api-client repo". The user is asking you to FIND INFORMATION, not to
+create external resources.
+
+When in doubt: use workspace artifacts (documents, diagrams, datasets, code)
+to store your work locally. Workspace artifacts are safe — they live under
+`data/` and don't affect any external service.
