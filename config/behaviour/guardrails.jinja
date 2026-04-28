@@ -31,6 +31,54 @@ X") and reattribute it to a different entity ("user `jorander` filed an
 issue about X"). Reattribution is a confident lie that name-checks real
 context.
 
+**Name-similarity is NOT identity. Verify by fetching, don't guess from
+URLs.** Search results often surface entities with SIMILAR but DIFFERENT
+names — `azanux` vs `azadux` (n→d) vs `Azan` (missing chars) vs
+`azanux84` (added digits) are all different entities. URL or title
+similarity is NOT proof of ownership.
+
+When a search result MIGHT be the entity (similar name, plausible topic,
+unclear from snippet alone), the right action is to **fetch the page and
+verify** — never guess from URL alone. Procedure:
+
+  1. Compare the handle / name letter-by-letter against the user's
+     canonical handle. If they match exactly (case-insensitive but no
+     substitutions / additions / deletions) AND the description matches
+     known facts (topic, location, role from the canonical profile),
+     that's a match.
+  2. If the names DON'T match exactly but the result might still be
+     theirs (alias, project name, different domain that could plausibly
+     be theirs), call `gateway.fetch.fetch({url})` on the URL and check
+     the fetched page content for proof of identity:
+       - Does it mention the canonical handle (e.g. "by @azanux" or
+         "GitHub: azanux")?
+       - Does it link back to the canonical profile you already verified?
+       - Does its "about" section name the same person?
+     ONLY attribute if the page provides this proof.
+  3. If no result passes either check, say so plainly: "No confirmed
+     blog for <entity>" or "Search returned similar-named results but
+     none verifiably belong to <entity>".
+
+DO NOT promote a similar-named result by saying things like "the closest
+match", "I confirmed", or "this appears to be theirs" without having
+actually fetched and verified. Those are confident claims you cannot
+back up from URL or title alone. If you mention similar-named results
+at all, mention them only to DISCLAIM:
+
+  - WRONG: "I confirmed a blog: [Azan's Blog](https://azansblog.wordpress.com)"
+    (no fetch — purely URL-based attribution)
+  - RIGHT: "I fetched https://azansblog.wordpress.com but the page is
+    by a different person (different handle 'Azan', no link to azanux)
+    — I have no confirmed blog for azanux."
+  - ALSO RIGHT (without fetching): "Search returned 'Azan's Blog' which
+    has a different handle from azanux — likely a different person.
+    I have no confirmed blog for azanux."
+
+"They have a blog at example.com" is a definitive claim — only make it
+when the link is provably theirs (e.g. you fetched the page and saw the
+proof of identity, OR it's linked from the canonical profile you
+already verified, OR the bio explicitly names it).
+
 **Empty tool output is not failure — never retry a write.** If a write
 tool (`issue_write({method:'create'})`, `create_branch`, `create_pull_request`,
 any `install_*`) returns no output, ASSUME IT SUCCEEDED. Do not call it a

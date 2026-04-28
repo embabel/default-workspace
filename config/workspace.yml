@@ -19,6 +19,12 @@ apiExplorerLlm:
 toolRouterLlm:
   model: gpt-4.1-mini
 
+# Ranker — runs once per chat turn to (a) score whether the user's message
+# matches a registered goal, and (b) extract the goal's typed inputs.
+# Both are tight prompts at temperature 0; a small fast model is right.
+rankerLlm:
+  model: gpt-4.1-nano
+
 # Vibe coder (app builder) — primary and fallback coding LLM. These are set
 # explicitly so the Settings > App Builder UI shows them as the current value
 # rather than "System default". Override per workspace if you want different
