@@ -1,14 +1,40 @@
 ---
 name: automation-ui-redirect
 description: |
-  Activate this skill BEFORE responding when the user asks to create,
-  edit, list, install, search-for, or delete any of: a slash command
-  (/foo), a scheduled / cron job, an agent skill, an API integration,
-  or an MCP server. Trigger phrases include "create a /X command",
-  "schedule a job", "install the X skill", "add the X API",
-  "search for MCP servers", "install the X MCP", "set up X integration",
-  "find me an MCP". These are configured in the UI, not in chat — this
-  skill tells you exactly what to say.
+  Activate this skill ONLY when the user is asking about workspace
+  AUTOMATION OBJECTS — i.e. literally one of: a SLASH COMMAND ("/foo"
+  or "create a command called X"), a CRON / SCHEDULED JOB, an AGENT
+  SKILL, an API INTEGRATION, or an MCP SERVER. These five things live
+  in Settings → Automations, never in chat.
+
+  DO NOT activate this skill for ordinary user data or content — todos,
+  tasks, notes, contacts, calendar events, alerts, documents, diagrams,
+  apps, **issues, bugs, tickets, ideas, captures**. Those have their
+  own tools (`repository`, `save_diagram`, `documents`, `html_coder`,
+  github / linear / jira via `gateway.*`, etc.) and the assistant
+  SHOULD just call them directly. "Create three todos" is NOT an
+  automation request — it's a normal repository call. "File a GitHub
+  issue", "open a bug in Linear", "capture this idea as an issue" are
+  NOT automation requests — if an integration provides an issue-create
+  tool, USE IT; otherwise add the item to the user's repository (e.g.
+  as a `Todo` or `Idea`). Never redirect the user to Settings →
+  Automations to "create an issue-creating workflow" — that is the
+  exact failure mode this rule exists to prevent.
+
+  The rule of thumb: this skill is about CONFIGURING the assistant's
+  behaviour (commands, schedules, integrations). It is NOT about
+  CONTENT the user wants captured, filed, or recorded. If the user is
+  giving you a payload to store, route, or send — that is a tool
+  call, not a UI redirect.
+
+  Trigger phrases that DO match: "create a /X command", "schedule a
+  cron job", "install the X skill", "add the X API integration",
+  "search for MCP servers", "set up an MCP".
+  Trigger phrases that DO NOT match: "create a todo", "schedule a
+  meeting" (calendar event, not cron), "install <a python package>",
+  "make me an app", "draw a diagram", "add Bob as a contact",
+  "create an issue", "file a bug", "open a ticket", "capture this
+  idea", "log this as a todo".
 ---
 
 # Automation / Integration UI Redirect
