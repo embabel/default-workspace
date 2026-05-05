@@ -7,3 +7,8 @@ apis/credentials/
 
 # Installed packs (each is its own git repo)
 packs/*/
+
+# OAuth client app credentials — admin-managed, never commit.
+# Guards both the per-workspace override (config/oauth-apps.yml) and the
+# installation default (admin/oauth-apps.yml) by filename match.
+oauth-apps.yml
