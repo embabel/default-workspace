@@ -1,6 +1,15 @@
 ---
 name: workspace-status
-description: Workspace introspection — what skills/APIs are loaded, the workspace path, configuration. Activate BEFORE "what skills do I have", "what's in my workspace", "show workspace status", "where is my workspace", "what tools are available", "what can you do".
+description: |
+  Workspace introspection — list the skills/APIs that are loaded,
+  the workspace path, configuration. Activate ONLY when the user
+  explicitly asks about the workspace itself: "what skills do I
+  have", "what's in my workspace", "show workspace status",
+  "where is my workspace". Do NOT activate for situational
+  questions like "what am I doing" (that's answered from the
+  user_context block in the system prompt), nor for capability
+  questions like "what can you do" (answer from your identity and
+  the personality prompt).
 ---
 
 # Workspace Status

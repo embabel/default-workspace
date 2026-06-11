@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<!--
+  Typed Entity View — the host that renders a lens's focused entities as typed
+  components, blendable into any view.
+
+  Shipped in the workspace at config/apps/ (NOT the JVM). The lens surface embeds
+  this file in a frame for a lens that presents { kind: "entities" }, handing it
+  the lens script (?script=base64). On load it fetches the entities' envelopes
+  from POST /api/v1/lenses/view and renders each one:
+
+    - resolve a component for the entity's type by importing
+      /apps/<Type>.component.js  (e.g. Movie.component.js, shipped beside the type
+      in its pack). If none exists, fall back to the built-in generic renderer.
+    - the HOST renders the action bar from envelope.actions (uniform across types)
+      and dispatches a click through the gateway: navigate (open url), tool
+      (POST /api/v1/tools/<name>), or chat (POST /api/v1/lenses/chat).
+
+  A component is a pure visual: `export default (entity, ctx) => HTMLElement`. It
+  must use ctx.el / textContent — no innerHTML from entity data.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Entities</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-from:#0a0a0f; --bg-to:#13131a; --surface:rgba(255,255,255,.04);
+      --surface-2:rgba(255,255,255,.07); --border:rgba(255,255,255,.10);
+      --fg:#f4f4f4; --muted:#8b8b96; --faint:#5d5d68;
+      --accent:#63c0f5; --violet:#9f77cd; --gold:#d8b27a; --green:#22c55e; --danger:#fb6563;
+      --mono:'JetBrains Mono',ui-monospace,Menlo,monospace; --sans:'Inter',system-ui,sans-serif;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0}
+    body{font-family:var(--sans);color:var(--fg);min-height:100vh;-webkit-font-smoothing:antialiased;
+      background:radial-gradient(120% 60% at 50% -10%,rgba(99,192,245,.08),transparent 60%),linear-gradient(180deg,var(--bg-from),var(--bg-to));
+      background-attachment:fixed;}
+    .wrap{max-width:880px;margin:0 auto;padding:28px 22px 60px;}
+    /* bare mode — inline cards (e.g. in a chat message): no chrome, but a solid
+       dark surface so the (dark-themed) cards read on any chat background */
+    body.bare{background:transparent;min-height:0;}
+    .bare .wrap{padding:2px;max-width:none;}
+    .bare .grid{grid-template-columns:1fr;gap:8px;}
+    .bare .entity{background:#14141b;border:1px solid rgba(255,255,255,.12);}
+
+    /* editorial header for a brief */
+    .brief-head{margin:6px 0 30px;animation:rise 500ms cubic-bezier(.2,.7,.2,1) both;}
+    .brief-issue{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin-bottom:14px;}
+    .brief-headline{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:clamp(32px,6vw,48px);line-height:1.05;letter-spacing:-.01em;margin:0 0 12px;color:#fff;}
+    .brief-dek{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:clamp(17px,2.6vw,21px);line-height:1.45;color:var(--muted);margin:0 0 18px;max-width:54ch;}
+    .brief-lead{background:linear-gradient(180deg,var(--surface-2),var(--surface));border:1px solid var(--border);border-left:2px solid var(--accent);border-radius:12px;padding:16px 18px;}
+    .brief-lead-title{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;font-size:22px;color:#fff;margin-bottom:6px;}
+    .brief-lead-body{font-size:14.5px;line-height:1.55;color:var(--fg);margin:0;}
+    .brief-closing{text-align:center;padding:24px 12px 4px;margin-top:10px;border-top:1px solid var(--border);}
+    .brief-quote{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:19px;color:var(--fg);}
+    .brief-attr{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--faint);margin-top:10px;}
+
+    .group{margin-bottom:30px;animation:rise 500ms cubic-bezier(.2,.7,.2,1) both;}
+    .group-label{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.24em;text-transform:uppercase;
+      color:var(--faint);margin:0 0 12px;display:flex;gap:10px;align-items:center;}
+    .group-label::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent);}
+    .group-count{color:var(--accent);}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
+
+    .entity{background:linear-gradient(180deg,var(--surface-2),var(--surface));border:1px solid var(--border);
+      border-radius:14px;padding:16px 16px 12px;display:flex;flex-direction:column;gap:10px;}
+
+    /* generic component */
+    .g-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;}
+    .g-name{font-size:16px;font-weight:600;color:#fff;line-height:1.2;}
+    .g-fields{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:12.5px;}
+    .g-key{color:var(--faint);font-family:var(--mono);font-size:11px;}
+    .g-val{color:var(--fg);overflow-wrap:anywhere;}
+    a.g-link{color:var(--accent);text-decoration:none;}
+    a.g-link:hover{text-decoration:underline;}
+
+    .chip{display:inline-block;font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:.08em;
+      text-transform:uppercase;padding:3px 7px;border-radius:999px;border:1px solid var(--border);color:var(--muted);background:rgba(255,255,255,.04);white-space:nowrap;}
+    .chip-type{color:var(--accent);border-color:rgba(99,192,245,.3);background:rgba(99,192,245,.10);}
+
+    /* action bar */
+    .actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:auto;padding-top:8px;border-top:1px solid var(--border);}
+    .act{font-family:var(--sans);font-size:12px;font-weight:500;color:var(--fg);background:var(--surface);
+      border:1px solid var(--border);border-radius:8px;padding:5px 10px;cursor:pointer;text-decoration:none;
+      display:inline-flex;align-items:center;gap:5px;transition:border-color .15s,color .15s,background .15s;}
+    .act:hover{border-color:var(--accent);color:var(--accent);}
+    .act-mutate:hover{border-color:var(--danger);color:var(--danger);}
+
+    .result{font-size:13px;line-height:1.5;color:var(--fg);background:rgba(99,192,245,.06);
+      border-left:2px solid var(--accent);border-radius:6px;padding:8px 10px;white-space:pre-wrap;}
+    .result-pending{color:var(--muted);font-style:italic;}
+    .res-row{padding:2px 0;border-bottom:1px solid var(--border);}
+    .res-row:last-child{border-bottom:0;}
+    .chips{display:flex;flex-direction:column;gap:6px;}
+    .chip-wrap{display:block;}
+    .echip{display:inline-flex;align-items:center;gap:7px;max-width:100%;font-family:var(--sans);font-size:12.5px;
+      background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:5px 11px;cursor:pointer;
+      color:var(--fg);text-align:left;transition:border-color .15s;}
+    .echip:hover,.echip-on{border-color:var(--accent);}
+    .echip-type{flex:0 0 auto;font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);}
+    .echip-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .echip-card{margin:8px 0 4px;}
+
+    .state{text-align:center;padding:60px 20px;color:var(--muted);}
+    .spinner{width:24px;height:24px;margin:0 auto 16px;border:2px solid var(--border);border-top-color:var(--accent);
+      border-radius:50%;animation:spin .8s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  </style>
+</head>
+<body>
+  <main class="wrap" id="root" data-test-id="entities-host"></main>
+
+  <script type="module">
+    const root = document.getElementById('root');
+    // Bare mode: just the cards (no brief header, group labels, or action bars) —
+    // for embedding a few entity cards inline, e.g. in a chat message.
+    const BARE = new URLSearchParams(location.search).get('bare') === '1';
+    if (BARE) document.body.classList.add('bare');
+
+    // ---- DOM helpers handed to every component (ctx) ----
+    function el(tag, cls, text) {
+      const n = document.createElement(tag);
+      if (cls) n.className = cls;
+      if (text != null) n.textContent = text;
+      return n;
+    }
+    function chip(text, cls) { return el('span', 'chip' + (cls ? ' ' + cls : ''), text); }
+    const ctx = { el, chip };
+
+    // ---- component registry: /apps/<Type>.component.js, generic fallback ----
+    // A component module may export `default(entity, ctx)` (the visual) and,
+    // optionally, `actions(entity, ctx)` — its own affordances. Pack/JS types
+    // (e.g. Movie) declare their actions HERE, beside the type, invoking the
+    // pack's gateway methods; the JVM never re-encodes them.
+    const cache = {};
+    async function moduleFor(type) {
+      if (type in cache) return cache[type];
+      let mod = null;
+      try { mod = await import(`/apps/${type}.component.js`); }
+      catch (e) { /* no custom component — generic fallback */ }
+      cache[type] = mod;
+      return mod;
+    }
+
+    // A field value: a link if it's a URL (absolute http(s), or a source/url/link
+    // path like /api/v1/sources/…), else plain text. textContent only — no markup
+    // from data; the href is set via setAttribute.
+    function fieldValue(key, value) {
+      const isUrl = /^https?:\/\//i.test(value) || (value.startsWith('/') && /url|link|href|source/i.test(key));
+      if (!isUrl) return el('span', 'g-val', value);
+      const a = el('a', 'g-val g-link', value);
+      a.setAttribute('href', value);
+      a.setAttribute('target', '_blank');
+      a.setAttribute('rel', 'noopener');
+      return a;
+    }
+
+    // ---- built-in generic component (Tier 0) ----
+    function genericBody(entity) {
+      const body = el('div', 'g-body');
+      const head = el('div', 'g-head');
+      head.appendChild(el('div', 'g-name', entity.name || entity.id));
+      head.appendChild(chip(entity.type || 'Entity', 'chip-type'));
+      body.appendChild(head);
+      const keys = Object.keys(entity.fields || {});
+      if (keys.length) {
+        const f = el('div', 'g-fields');
+        keys.slice(0, 8).forEach((k) => {
+          f.appendChild(el('span', 'g-key', k));
+          f.appendChild(fieldValue(k, String(entity.fields[k])));
+        });
+        body.appendChild(f);
+      } else if (entity.description) {
+        body.appendChild(el('div', 'g-val', entity.description));
+      }
+      return body;
+    }
+
+    // ---- controls = the entity type's gateway methods (from methods.json) ----
+    // Each renders as a button and dispatches through gateway.js — the SAME path
+    // vibe-coded apps use. No bespoke chat/tool special paths.
+    function methodBar(entity) {
+      const bar = el('div', 'actions');
+      (entity.methods || []).forEach((m) => {
+        const btn = el('button', 'act');
+        btn.setAttribute('data-test-id', 'method-' + m.name);
+        btn.textContent = m.name;
+        btn.onclick = () => invokeMethod(entity, m, btn);
+        bar.appendChild(btn);
+      });
+      return bar;
+    }
+
+    // Resolve argMap: `$id` → the entity's id/field; `#param` → a caller param we
+    // leave to the gateway's default (omit).
+    function methodArgs(entity, method) {
+      const args = {};
+      for (const [k, v] of Object.entries(method.argMap || {})) {
+        if (typeof v === 'string' && v.startsWith('$')) {
+          const key = v.slice(1);
+          args[k] = key === 'id' ? entity.id : ((entity.fields && entity.fields[key]) ?? entity[key]);
+        }
+      }
+      return args;
+    }
+
+    async function invokeMethod(entity, method, btn) {
+      const card = btn.closest('.entity');
+      let panel = card.querySelector('.result');
+      if (!panel) { panel = el('div', 'result'); card.appendChild(panel); }
+      panel.className = 'result result-pending';
+      panel.textContent = '…';
+      try {
+        const [ns, fn] = String(method.gatewayTool || '').split('.');
+        const gw = window.gateway;
+        if (!gw || !gw[ns] || typeof gw[ns][fn] !== 'function') throw new Error('gateway.' + method.gatewayTool + ' unavailable');
+        const result = await gw[ns][fn](methodArgs(entity, method));
+        panel.className = 'result';
+        renderResult(panel, result);
+      } catch (e) {
+        panel.className = 'result';
+        panel.textContent = 'Failed: ' + (e && e.message);
+      }
+    }
+
+    function renderResult(panel, result) {
+      panel.textContent = '';
+      const arr = Array.isArray(result) ? result
+        : (result && Array.isArray(result.entities) ? result.entities
+          : (result && Array.isArray(result.nodes) ? result.nodes : null));
+      if (!arr) { panel.textContent = typeof result === 'string' ? result : JSON.stringify(result, null, 2); return; }
+      if (!arr.length) { panel.textContent = '(none)'; return; }
+      const chips = el('div', 'chips');
+      arr.slice(0, 24).forEach((it) => {
+        if (it && it.id) chips.appendChild(entityChip(it));
+        else chips.appendChild(el('div', 'res-row', String((it && (it.name || it.title)) || JSON.stringify(it))));
+      });
+      panel.appendChild(chips);
+    }
+
+    // A neighbour is an entity — render a chip that expands into its full card on
+    // click (and that card has ITS methods, so you can keep navigating the graph).
+    function entityChip(item) {
+      const wrap = el('div', 'chip-wrap');
+      const chip = el('button', 'echip');
+      const type = item.type || item.label || (item.types && item.types[0]) || 'Entity';
+      chip.appendChild(el('span', 'echip-type', type));
+      chip.appendChild(el('span', 'echip-name', item.name || item.title || item.id));
+      let open = null;
+      chip.onclick = async () => {
+        if (open) { open.remove(); open = null; chip.classList.remove('echip-on'); return; }
+        chip.classList.add('echip-on');
+        open = el('div', 'echip-card'); open.textContent = '…'; wrap.appendChild(open);
+        try {
+          const env = await fetchEnvelope(item.id);
+          open.textContent = '';
+          open.appendChild(env ? await renderEntity(env) : genericBody({ name: item.name, type, fields: {} }));
+        } catch (e) { open.textContent = 'Failed: ' + (e && e.message); }
+      };
+      wrap.appendChild(chip);
+      return wrap;
+    }
+
+    // Hydrate one entity by id into a full envelope (with its fields + methods),
+    // by focusing it through the lens view endpoint.
+    async function fetchEnvelope(id) {
+      const script = `await gateway.lens.focus({ ids: ${JSON.stringify([id])} });`;
+      const r = await fetch('/api/v1/lenses/view', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+        body: JSON.stringify({ script }),
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return ((await r.json()).entities || [])[0] || null;
+    }
+
+    // ---- render one entity: component body + method controls ----
+    async function renderEntity(entity) {
+      const card = el('div', 'entity');
+      card.setAttribute('data-test-id', 'entity-' + entity.type);
+      const mod = await moduleFor(entity.type);
+      let body;
+      try { body = (mod && typeof mod.default === 'function') ? mod.default(entity, ctx) : genericBody(entity); }
+      catch (e) { body = genericBody(entity); }
+      card.appendChild(body);
+      if ((entity.methods || []).length) card.appendChild(methodBar(entity));
+      return card;
+    }
+
+    // ---- editorial header for a `brief` presentation (prose only — the entity
+    // sections below are typed components) ----
+    function briefHeader(brief) {
+      const head = el('header', 'brief-head');
+      if (brief.date) {
+        let d = brief.date;
+        try { d = new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
+          .format(new Date(brief.date + 'T00:00:00')).replace(/^(\w+)/, '$1 —'); } catch (e) { /* keep iso */ }
+        head.appendChild(el('div', 'brief-issue', d));
+      }
+      if (brief.headline) head.appendChild(el('h1', 'brief-headline', brief.headline));
+      if (brief.dek) head.appendChild(el('p', 'brief-dek', brief.dek));
+      if (brief.leadStory && (brief.leadStory.title || brief.leadStory.body)) {
+        const lead = el('div', 'brief-lead');
+        if (brief.leadStory.title) lead.appendChild(el('div', 'brief-lead-title', brief.leadStory.title));
+        if (brief.leadStory.body) lead.appendChild(el('p', 'brief-lead-body', brief.leadStory.body));
+        head.appendChild(lead);
+      }
+      return head;
+    }
+    function briefFooter(brief) {
+      if (!brief.closingThought || !brief.closingThought.quote) return null;
+      const c = el('div', 'brief-closing');
+      c.appendChild(el('div', 'brief-quote', '“' + brief.closingThought.quote + '”'));
+      c.appendChild(el('div', 'brief-attr', '— ' + (brief.closingThought.attribution || 'Anonymous')));
+      return c;
+    }
+
+    // In bare mode the host is embedded in a frame sized by the parent; report our
+    // content height so the parent can fit us exactly (cards vary in height — a
+    // Movie is taller than a Person — so a fixed frame height would clip them).
+    function postHeight() {
+      try { parent.postMessage({ type: 'entity-cards-height', height: document.documentElement.scrollHeight }, '*'); } catch (e) { /* not framed */ }
+    }
+
+    // ---- top-level: fetch envelopes (+ presentation), render ----
+    async function load() {
+      root.innerHTML = '';
+      root.appendChild((() => { const s = el('div', 'state'); s.appendChild(el('div', 'spinner')); s.appendChild(el('div', null, 'Loading…')); return s; })());
+      try {
+        const params = new URLSearchParams(location.search);
+        let data;
+        if (params.get('view')) {
+          // Preferred: a handoff token for an already-opened view — no re-run, no
+          // giant URL.
+          const r = await fetch('/api/v1/lenses/view/' + encodeURIComponent(params.get('view')), { credentials: 'same-origin' });
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          data = await r.json();
+        } else {
+          // Fallback: the script in the URL (small standalone lenses / tests).
+          const script = params.get('script') ? atob(params.get('script')) : '';
+          const r = await fetch('/api/v1/lenses/view', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
+            body: JSON.stringify({ script }),
+          });
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          data = await r.json();
+        }
+        const entities = data.entities || [];
+
+        // Bare mode: flat cards, no header/groups; report height so the parent
+        // frame fits every card (heights vary by type).
+        if (BARE) {
+          root.innerHTML = '';
+          if (!entities.length) { postHeight(); return; }
+          const grid = el('div', 'grid');
+          for (const e of entities) grid.appendChild(await renderEntity(e));
+          root.appendChild(grid);
+          postHeight();
+          requestAnimationFrame(postHeight);
+          setTimeout(postHeight, 300);
+          try { new ResizeObserver(postHeight).observe(document.body); } catch (e) { /* older browser */ }
+          return;
+        }
+
+        // A `brief` presentation adds an editorial header + section labels/order.
+        let brief = null;
+        if (data.presentation) {
+          try { const p = JSON.parse(data.presentation); if (p && p.kind === 'brief') brief = p; } catch (e) { /* not a brief */ }
+        }
+
+        root.innerHTML = '';
+        if (brief) root.appendChild(briefHeader(brief));
+        if (!entities.length) {
+          if (!brief) { const s = el('div', 'state'); s.appendChild(el('div', null, 'Nothing in focus.')); root.appendChild(s); }
+          return;
+        }
+
+        // group by type
+        const groups = new Map();
+        entities.forEach((e) => { (groups.get(e.type) || groups.set(e.type, []).get(e.type)).push(e); });
+
+        // order + labels: the brief's sections first (with their labels), then
+        // any remaining types under their own name.
+        const order = [];
+        const labelByType = {};
+        if (brief && Array.isArray(brief.sections)) {
+          brief.sections.forEach((s) => { if (s.type) { order.push(s.type); labelByType[s.type] = s.label || s.type; } });
+        }
+        for (const t of groups.keys()) if (!order.includes(t)) order.push(t);
+
+        for (const type of order) {
+          const items = groups.get(type);
+          if (!items || !items.length) continue;
+          const g = el('div', 'group');
+          g.setAttribute('data-test-id', 'group-' + type);
+          const label = el('div', 'group-label', labelByType[type] || type);
+          label.appendChild(el('span', 'group-count', String(items.length)));
+          g.appendChild(label);
+          const grid = el('div', 'grid');
+          for (const e of items) grid.appendChild(await renderEntity(e));
+          g.appendChild(grid);
+          root.appendChild(g);
+        }
+
+        if (brief) { const f = briefFooter(brief); if (f) root.appendChild(f); }
+      } catch (e) {
+        root.innerHTML = '';
+        const s = el('div', 'state'); s.appendChild(el('div', null, 'Couldn’t load: ' + (e && e.message))); root.appendChild(s);
+      }
+    }
+
+    // expose helpers for component tests / advanced components
+    window.__entityHost = { load, ctx };
+
+    // Load the apps-runtime gateway (the same one vibe-coded apps use) so a
+    // component can call backend gateway methods on the sandbox —
+    // gateway.omdb.getMovie, gateway.streamingAvailability.getShow,
+    // gateway.kg.neighbors, … No bespoke paths; this is THE path.
+    await new Promise((res) => {
+      if (window.gateway) return res();
+      const s = document.createElement('script');
+      s.src = '/api/v1/apps-runtime/gateway.js';
+      s.onload = res; s.onerror = res;
+      document.head.appendChild(s);
+    });
+
+    load();
+  </script>
+</body>
+</html>

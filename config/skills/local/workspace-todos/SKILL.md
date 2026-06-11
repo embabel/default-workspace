@@ -1,6 +1,6 @@
 ---
 name: workspace-todos
-description: Workspace todos / tasks — create, list, update, complete, delete. Activate BEFORE any "todo", "task", "remind me", "add to my list", "mark X done", "what TODOs do I have". NOT for external trackers (GitHub, Jira) — use that integration's skill.
+description: Workspace todos/tasks — create, list, update, complete, delete. For "todo", "remind me", "add to my list", "mark X done". NOT external trackers (GitHub/Jira).
 ---
 
 # Workspace Todos

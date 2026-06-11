@@ -1,6 +1,6 @@
 ---
 name: diagrams
-description: Render diagrams (Mermaid, graphviz, plantuml, SVG). Activate BEFORE any "diagram", "flowchart", "sequence diagram", "class diagram", "ER diagram", "mindmap", "architecture diagram". NEVER paste diagram source inline — render it.
+description: Render diagrams (Mermaid, graphviz, plantuml, SVG) — flowchart, sequence, class, ER, mindmap, architecture. Render, never paste source inline.
 ---
 
 # Diagrams

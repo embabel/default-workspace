@@ -1,0 +1,15 @@
+# Web search — universally available in every chat. Brave's MCP server
+# provides a free-tier web-search tool the LLM reaches for when the
+# user asks "who is <public-figure>", "latest news on X", or otherwise
+# needs current information beyond what the knowledge graph holds.
+#
+# Requires `BRAVE_API_KEY` in the environment (free tier sufficient
+# for personal use; sign up at https://api.search.brave.com/).
+# If the key is missing the server fails fast at MCP startup and the
+# tool simply isn't available — no other chat behaviour is affected.
+- name: brave-search
+  description: "Brave web search — current public information from the open web. Use for questions about public figures, news, current events, or any topic the user's knowledge graph wouldn't cover."
+  command: docker
+  args: ["run", "-i", "--rm", "-e", "BRAVE_API_KEY", "mcp/brave-search"]
+  env:
+    BRAVE_API_KEY: ${BRAVE_API_KEY}

@@ -1,29 +1,58 @@
 ---
 name: artifacts
-description: Workspace artifacts — list/read/write/delete generated files (apps, code, datasets, diagrams). Activate BEFORE "show my apps", "list diagrams", "what artifacts have I created", "delete the X file", "open my dataset", or when the user references a previously generated artifact by name.
+description: Workspace artifacts — saved generated files (apps, code, datasets, diagrams). For "show my apps", "list diagrams", "delete the X file", "open my dataset", or referencing a generated artifact by name. NOT the JS/Python sandbox's own filesystem (`/workspace/scripts`) — use `fs` / `bash_run("ls ...")` inside execute_* for that.
 ---
 
-# Artifacts
+# Artifacts (workspace-saved files)
 
-> **Use `gateway.artifacts.*`.** Types are `apps`, `code`, `datasets`, `diagrams` (case as listed; matches `/{type}/{name}` URLs).
+> **Use `gateway.artifacts.*`.** Types are `apps`, `code`, `datasets`,
+> `diagrams` (lowercase; matches `/{type}/{name}` URLs).
 
 ```ts
-gateway.artifacts.listArtifacts({})
-gateway.artifacts.readArtifact({ type, name })
+gateway.artifacts.listArtifacts({})            // → STRING (markdown sections per type)
+gateway.artifacts.readArtifact({ type, name }) // → STRING (file contents)
 gateway.artifacts.writeArtifact({ type, name, content })
 gateway.artifacts.deleteArtifact({ type, name })
 ```
 
-## Rules
+**Cardinal rule:** `listArtifacts`, `readArtifact`, `writeArtifact`, and
+`deleteArtifact` ALL return formatted **strings**, not objects. Do NOT
+do `.map(...)` or `.artifacts` or destructure them. Surface the string
+to the user (or pass it to `platform.llm` for paraphrasing).
 
-1. **Diagrams → use `gateway.save.diagram`** (see `diagrams` skill). It runs the render pipeline. `writeArtifact({type:"diagrams"})` bypasses it.
-2. **HTML apps → use vibe-coder.** `writeArtifact({type:"apps"})` is for surgical edits, not new app creation.
-3. **List before delete.** Confirm the name exists; silent deletes surprise the user.
+## When this skill is the WRONG one
 
-## Pattern
+- "List the files in the home directory of the sandbox" → use Node
+  `fs.readdirSync(...)` or `bash_run("ls -la ~")`. The sandbox's own
+  filesystem (where your script runs) is **not** workspace artifacts.
+- "What's in `/workspace/...`" → same: sandbox filesystem, not artifacts.
+- HTML apps you're CREATING → use vibe-coder (this skill is for editing
+  existing ones, not generating new).
+- Diagrams you're RENDERING → use `gateway.save.diagram` (the
+  `diagrams` skill runs the render pipeline; `writeArtifact({type:"diagrams"})`
+  bypasses it).
+
+## Patterns
 
 ```js
-const all = await gateway.artifacts.listArtifacts({});
+// List — surface the string straight to the user.
+const list = await gateway.artifacts.listArtifacts({});
+await platform.send_message(list);
+
+// Read one specific artifact.
 const html = await gateway.artifacts.readArtifact({ type: "apps", name: "todo-tracker.html" });
-await gateway.artifacts.writeArtifact({ type: "datasets", name: "issues.json", content: JSON.stringify(issues, null, 2) });
+await platform.send_message("```html\n" + html + "\n```");
+
+// Write a dataset.
+await gateway.artifacts.writeArtifact({
+  type: "datasets",
+  name: "issues.json",
+  content: JSON.stringify(issues, null, 2),
+});
 ```
+
+## Rules
+
+1. **List before delete.** Confirm the name exists; silent deletes surprise the user.
+2. **Don't `.map()` the listing.** It's a string. See "Cardinal rule".
+3. **Sandbox files ≠ artifacts.** See "When this skill is the WRONG one".

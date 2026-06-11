@@ -1,4 +1,6 @@
 - name: CronTrigger
   description: "Trigger event for a cron-scheduled action, identified by name"
+  visibility: internal
+  userAnchor: false
   properties:
     name: "The name of the cron job that fired"

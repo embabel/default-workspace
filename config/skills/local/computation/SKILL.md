@@ -5,53 +5,106 @@ description: Anything compute-y the user asks — math, data manipulation, hashi
 
 # Computation
 
-> **Your script IS the sandbox.** You're already in Node.js — write
-> JavaScript that does the computation, then surface the result via
-> `platform.send_message`. There is no separate "Python sandbox" or
-> `execute_python` tool exposed to you.
+You can run code to compute the answer. Two paths depending on which
+tools are available to you in this turn:
 
-For things JS does well (arithmetic, strings, arrays, regex, JSON,
-hashing, dates, sorting), just use the standard library:
+## Path A — `execute_python` / `execute_javascript` are top-level tools
+
+If you can see `execute_python` or `execute_javascript` in your tool
+list, use them directly. They run in a sandboxed interpreter:
+
+- `execute_python` is the right call for numpy / pandas / matplotlib /
+  hashlib / `import` style code. Standard Python; `import` works.
+- `execute_javascript` is the right call for crypto.subtle, JSON,
+  regex, anything quick. Standard Node-ish; `require` works.
+
+Always close with the actual computed value. "I'll compute this" with
+no answer is a UX failure.
+
+```python
+# execute_python: SHA-256 of "hello world"
+import hashlib
+print(hashlib.sha256(b"hello world").hexdigest())
+```
+
+## Path B — only `gateway.*` and `platform.*` available (CodeAct)
+
+If you don't see `execute_python` / `execute_javascript` in your tool
+list, you ARE the script — your reply IS executable JavaScript
+running in the sandbox. Use Node built-ins:
 
 ```js
 const crypto = require("crypto");
 const hash = crypto.createHash("sha256").update("hello world").digest("hex");
-await platform.send_message("SHA-256 of 'hello world': `" + hash + "`");
+await platform.send_message("SHA-256: `" + hash + "`");
 ```
 
-Available built-ins in the sandbox: `crypto`, `fs`, `path`, `url`,
-`util`, `zlib`, plus `fetch` (for HTTP). **Use `require(...)`** —
-ES-module `import` is not enabled.
+Available built-ins: `crypto`, `fs`, `path`, `url`, `util`, `zlib`,
+plus `fetch`. **Use `require(...)`** — `import` is not enabled.
 
-## When the answer needs Python-only libraries
+Use `fs.readdirSync(...)` / `bash_run("ls ~")` to inspect the
+sandbox's own filesystem (`/workspace`, home dir, etc.). The
+sandbox is YOUR runtime — `gateway.artifacts.*` is for the user's
+saved workspace files, NOT for sandbox-fs inspection.
 
-If the user explicitly asks for numpy / pandas / matplotlib / sklearn
-output, you have two options:
+If the user explicitly asks for Python output and Path B is your only
+option, you have THREE choices in order of preference:
 
-1. **Translate to JS** when the math is small (eigenvalues of a 2×2,
-   Fibonacci, basic stats). Most "use Python" requests are about
-   getting a result, not about Python per se.
-2. **Use `platform.llm`** with `role: "code"` to get a numerical
-   answer — call it like a smart calculator. NOT a real interpreter
-   but adequate for one-shot results:
+### 1. Translate to JS
 
-   ```js
-   const answer = await platform.llm(
-     "Compute the eigenvalues of [[1,2],[3,4]] and return ONLY the two numbers as JSON array.",
-     { role: "code", system: "Output exactly one JSON array, nothing else." },
-   );
-   await platform.send_message("Eigenvalues: " + answer);
-   ```
+Fibonacci, eigenvalues of small matrices, basic stats are all easy in
+JS. Skip Python entirely:
 
-3. **Tell the user honestly** if the request needs heavy Python
-   tooling (matplotlib plots, scipy, sklearn) that JS can't match —
-   don't fake it with `child_process.exec("python ...")` or
-   `platform.llm_object` with a `code` role; both fail.
+```js
+const fib = [0, 1];
+for (let i = 2; i < 10; i++) fib.push(fib[i-1] + fib[i-2]);
+await platform.send_message("Fibonacci: " + fib.join(", "));
+```
 
-## Rules
+### 2. Write the script, then run it (the "save and run" pattern)
 
-1. **Don't `import { x } from "y"`.** Use `const x = require("y")`.
-2. **Don't `child_process.exec("python3 ...")`.** Python isn't in the
-   sandbox PATH from your script's perspective.
-3. **Show the numerical result.** "I'll compute this" with no answer
-   afterwards is a UX failure — always close with the value.
+`python3` IS on the sandbox PATH. The reliable pattern is to **write
+the script to a file first** and then `execSync` it. Do NOT try to
+inline Python via `python3 -c "..."` from JS — the escape rules for
+multi-line indented Python through a JS template literal through a
+shell argument are a minefield (newlines becoming `;` produce
+`SyntaxError`, indented blocks blow up, quoted strings collide).
+
+```js
+const fs = require("fs");
+const { execSync } = require("child_process");
+
+fs.writeFileSync("/tmp/fib.py", `
+a, b = 0, 1
+for _ in range(10):
+    print(a)
+    a, b = b, a + b
+`);
+const out = execSync("python3 /tmp/fib.py", { encoding: "utf-8" });
+await platform.send_message("Fibonacci:\n```\n" + out + "```");
+```
+
+If the user said "save it, then run it" — pick a stable name like
+`/tmp/<thing>.py` (or `/workspace/<thing>.py` if they need to find it
+later) so the "save" step is real and inspectable.
+
+### 3. Use `platform.llm` for a one-shot numerical answer
+
+LLM-as-calculator. Adequate for "what are the eigenvalues" but NOT a
+real interpreter — don't use for anything stateful or multi-step:
+
+```js
+const answer = await platform.llm(
+  "Compute the eigenvalues of [[1,2],[3,4]] and return ONLY the two numbers as JSON array.",
+  { role: "code", system: "Output exactly one JSON array, nothing else." },
+);
+await platform.send_message("Eigenvalues: " + answer);
+```
+
+## Rules (both paths)
+
+1. **Always show the numerical result.** Don't describe what the code
+   would do — run it and surface the value.
+2. **Save-and-run for Python in Path B.** `python3 -c "..."` with
+   multi-line code is a trap (see option 2). Write the file, then exec.
+3. **Don't `import { x } from "y"`** in JS — use `const x = require("y")`.

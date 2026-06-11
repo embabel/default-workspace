@@ -1,4 +1,6 @@
 - name: TaskQuery
   description: "A request to list or query tasks"
+  visibility: internal
+  userAnchor: false
   properties:
     filter: "Optional status filter: backlog, ready, in-flight, blocked, done, or 'all'"
