@@ -1,0 +1,15 @@
+{
+  "name": "embabel-workspace-lenses",
+  "private": true,
+  "type": "module",
+  "description": "Authored program lenses (Lens<P,T>). Built to sibling .lens.js that the host inlines against an injected Lens base.",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "node build.mjs"
+  },
+  "devDependencies": {
+    "@embabel/runtime-types": "file:../../../assistant/tooling/runtime-types",
+    "esbuild": "^0.21.0",
+    "typescript": "^5.4.0"
+  }
+}
