@@ -1,0 +1,69 @@
+# On-demand SEMANTIC join: an email thread relevant (by meaning) to an anchor.
+# Materialized transiently when a query traverses to it, then rolled back — nothing
+# persists. Backed by vector search over the user's thread summaries, so it works
+# for any workspace (email is part of the standard model). See specs/VIRTUAL_CYPHER.md.
+#
+#   MATCH (p:Person {name:'Ada Lovelace'})-[r:RELEVANT_TO]->(t:RelevantEmailThread)
+#   RETURN t.subject, t.snippet, r.score ORDER BY r.score DESC
+#
+# The anchor's keyField value (a person/org name, a meeting subject) is the text
+# embedded for the similarity search; the score is on the RELEVANT_TO edge (r.score).
+- name: RelevantEmailThread
+  visibility: internal
+  userAnchor: false
+  description: "An email thread semantically relevant to a person, organization, or meeting — fetched on demand via vector search over the user's thread summaries."
+  virtualJoins:
+    - anchorLabel: Concept
+      relationship: RELEVANT_TO
+      keyField: value          # the free-text topic/idea is embedded for similarity
+      recordKeyField: matchedFor
+      producer: relatedThreads
+      description: "SEMANTIC similarity to a FREE-TEXT topic/idea — \"threads about X\" where X is a concept, not a named entity. The Concept is seeded from a query literal, e.g. (:Concept {value:'cars'})-[:RELEVANT_TO]->(:RelevantEmailThread). Read t.participantNames for \"who did I discuss X with\". NOT a factual edge."
+    - anchorLabel: Person
+      relationship: RELEVANT_TO
+      keyField: name           # the person's name is embedded for similarity
+      recordKeyField: matchedFor
+      producer: relatedThreads
+      description: "SEMANTIC similarity ONLY (vector search over thread summaries), NOT a factual edge. Use for \"threads about / related to X\". For whether or how much you EMAILED someone use (:AssistantUser)-[:EMAILED]->(:Person), NEVER this. Anchors on :Person/:Organization/:Meeting only — not (me:AssistantUser)."
+    - anchorLabel: Organization
+      relationship: RELEVANT_TO
+      keyField: name           # the company's name is embedded
+      recordKeyField: matchedFor
+      producer: relatedThreads
+      description: "SEMANTIC similarity ONLY (vector search over thread summaries), NOT a factual edge. Use for \"threads about / related to this org\", never for correspondence facts."
+    - anchorLabel: Meeting
+      relationship: RELEVANT_TO
+      keyField: subject        # the meeting subject is embedded
+      recordKeyField: matchedFor
+      producer: relatedThreads
+      description: "SEMANTIC similarity ONLY (vector search over thread summaries), NOT a factual edge. Use for \"threads about this meeting\", never for correspondence facts."
+  examples:
+    # STEERING — a "summarize my discussions with X" digest is built from thread CONTENT
+    # (`t.snippet` / `t.subject`), NEVER from topic labels (`topic.name` inflates into generic
+    # word salad grounded in nothing the user wrote) and NEVER from a string literal.
+    - q: "summarize my email discussions with Alex Doe"
+      cypher: |
+        MATCH (p:Person) WHERE toLower(p.name) CONTAINS 'alex' AND toLower(p.name) CONTAINS 'doe'
+        MATCH (p)-[:RELEVANT_TO]->(t:RelevantEmailThread)
+        RETURN summarize(t.snippet) AS digest
+    # STEERING — co-participants are READ from `t.participantNames` (the projected property),
+    # never derived by fanning BACK over RELEVANT_TO to other Persons (a similarity edge, not
+    # a membership edge — the reverse walk matches nothing).
+    - q: "who is involved in email chains with me and Alex Doe"
+      cypher: |
+        MATCH (p:Person) WHERE toLower(p.name) CONTAINS 'alex' AND toLower(p.name) CONTAINS 'doe'
+        MATCH (p)-[:RELEVANT_TO]->(t:RelevantEmailThread)
+        UNWIND t.participantNames AS participant
+        WITH p, participant
+        WHERE toLower(participant) <> toLower(p.name)
+        RETURN DISTINCT participant LIMIT 200
+  properties:
+    id:
+      description: "Chunk id of the matched thread summary — the node identity."
+      metadata:
+        identity: "true"
+    subject: "Thread subject, when available."
+    snippet: "A short excerpt of the matched thread summary."
+    threadId: "Source thread id, when available."
+    participantNames: "Names of the people on the thread — read this for \"who did I discuss X with\"."
+    participantEmails: "Email addresses of the thread participants, when available."

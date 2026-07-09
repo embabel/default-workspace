@@ -1,0 +1,30 @@
+# Named views — saved Cypher bodies referenced in a query by NAME as a plain label, expanded to a leading
+# CALL {} subquery (no Cypher grammar change). See docs/plans/virtual-cypher-views.md.
+#
+# A view here must be a SUBSET view: `MATCH … [WHERE …] RETURN <singleNodeVar>` — its rows ARE nodes of an
+# existing (real or virtual) type, so it preserves identity and composes:
+#   MATCH (p:my_correspondents)-[:WORKS_FOR]->(o:Organization) RETURN o.name
+# expands to
+#   CALL { MATCH (me:AssistantUser)-[:EMAILED]->(p:Person) RETURN p AS p } MATCH (p)-[:WORKS_FOR]->(o) RETURN o.name
+- name: my_correspondents
+  description: "People you have emailed — a subset of Person."
+  cypher: |
+    MATCH (me:AssistantUser)-[:EMAILED]->(p:Person) RETURN p
+
+- name: my_documents
+  description: "Documents you own — a subset of Document."
+  cypher: |
+    MATCH (me:AssistantUser)<-[:OWNED_BY]-(d:Document) RETURN d
+
+# A MATERIALISED view: its result nodes are cached (committed) and a reference reads the cache instead of
+# re-running the body, until the TTL expires — then the next reference recomputes. Same label usage as a
+# regular view; only the caching differs. Useful for expensive bodies (e.g. an agentic-rag traversal).
+- name: mv_correspondents
+  description: "Cached people you have emailed (materialised, refreshed hourly)."
+  materialized: true
+  ttl: 1h
+  # The type the view's rows are — required for a materialised view: the cache binds the members off the
+  # MEMBER set and the scope rewriter needs a label on that variable.
+  outputLabel: Person
+  cypher: |
+    MATCH (me:AssistantUser)-[:EMAILED]->(p:Person) RETURN p
