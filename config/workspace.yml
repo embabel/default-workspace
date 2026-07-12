@@ -4,17 +4,21 @@ version: 1
 # Active personality — directory name under behaviour/personalities/
 activePersonality: marvin
 
+# Runtime LLMs are selected by ROLE (mapped to a model in Settings → LLM
+# Roles / application.yml embabel.models.llms). The roles below resolve to
+# the same models these previously pinned directly, so effective models are
+# unchanged: chat_cheap → gpt-4.1-mini, chat_best → gpt-4.1, routing → gpt-4.1-nano.
 chat:
-  model: gpt-4.1-mini
+  role: chat_cheap
 
 actionCompilerLlm:
   model: gpt-4.1
 
 memoryLlm:
-  model: gpt-4.1-mini
+  role: chat_cheap
 
 apiExplorerLlm:
-  model: gpt-4.1
+  role: chat_best
 
 toolRouterLlm:
   model: gpt-4.1-mini
@@ -23,16 +27,16 @@ toolRouterLlm:
 # matches a registered goal, and (b) extract the goal's typed inputs.
 # Both are tight prompts at temperature 0; a small fast model is right.
 rankerLlm:
-  model: gpt-4.1-nano
+  role: routing
 
-# Vibe coder (app builder) — primary and fallback coding LLM. These are set
-# explicitly so the Settings > App Builder UI shows them as the current value
-# rather than "System default". Override per workspace if you want different
-# models or tuning.
+# Vibe coder (app builder) — primary and fallback coding LLM, selected by
+# ROLE (mapped to a model in Settings → LLM Roles / application.yml
+# embabel.models.llms). code_best → claude-sonnet-4-6 (unchanged primary);
+# code_cheap → gpt-4.1-mini (the fallback now follows the code_cheap role
+# rather than pinning a model). Repoint either role in LLM Roles to change
+# the effective model without editing this file.
 codingLlm:
-  model: claude-sonnet-4-6
-  # timeout: 3m   # override if vibe coder times out on complex apps
+  role: code_best
 fallbackCodingLlm:
-  model: claude-opus-4-6
-  # timeout: 5m
+  role: code_cheap
 # codingModelFallbackAfterFailures: 2
