@@ -42,6 +42,16 @@
       recordKeyField: matchedFor
       producer: documentsKeyword
       description: "LEXICAL relevance (fulltext, exact tokens) — \"documents that MENTION X\". Pin via:'keyword' on the edge, e.g. (:Concept {value:'lotteries'})-[:RELEVANT_TO {via:'keyword'}]->(:Document). For \"mentions BOTH X and Y\", write two such edges converging on the same Document. Per-match data is on the EDGE: r.score, r.snippet, r.mode, r.rank."
+    # AGENTIC (via:'agentic-rag') — retrieval by a bounded LLM loop honouring an `intent` brief on the
+    # edge. Use when relevance is a JUDGMENT, not a similarity ("documents where X is a decision-maker",
+    # "genuinely analyses Y"). EXPENSIVE — prefer vector/keyword for plain relevance.
+    - anchorLabel: Concept
+      relationship: RELEVANT_TO
+      via: agentic-rag
+      keyField: value
+      recordKeyField: matchedFor
+      producer: documentsAgentic
+      description: "AGENTIC relevance — an LLM retrieval loop judges each document against the edge's `intent` brief, e.g. (:Concept {value:'Acme'})-[:RELEVANT_TO {via:'agentic-rag', intent:'renewal risk'}]->(:Document). EXPENSIVE; only when the question demands judgment beyond similarity. Per-match data on the EDGE: r.score (the judged 0..1 fit), r.snippet (verbatim evidence), r.intent, r.rank."
   properties:
     id:
       description: "Document id (RAG ContentRoot identity) — the node identity."

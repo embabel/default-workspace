@@ -18,3 +18,13 @@
   index: documents
   k: 8
   minScore: 0.0
+
+# AGENTIC retrieval over the same corpus (spec §8.3) — a bounded LLM loop that reformulates, runs both
+# search modes, reads further into inconclusive candidates, and returns only documents it judges fit the
+# `intent` brief on the query edge. EXPENSIVE (LLM calls per anchor): select it explicitly with
+# via:'agentic-rag'; pair with a materialized view for repeated queries.
+- name: documentsAgentic
+  kind: agentic-rag
+  index: documents_agentic
+  k: 8
+  minScore: 0.0
