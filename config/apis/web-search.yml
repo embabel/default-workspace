@@ -1,0 +1,23 @@
+# Web search — universally available in every chat. Brave Search's REST
+# API (vendored OpenAPI spec at brave.yaml) provides web and news search
+# the LLM reaches for when the user asks "who is <public-figure>",
+# "latest news on X", or otherwise needs current information beyond what
+# the knowledge graph holds. Replaces the former brave-search Docker MCP
+# server — same capability, no container.
+#
+# Requires `BRAVE_API_KEY` in the workspace credential store or the
+# environment (free tier sufficient for personal use; sign up at
+# https://api.search.brave.com/). If the key is missing the API is
+# skipped at load time — no other chat behaviour is affected.
+#
+# The research pack vendors the same spec under the same `brave` name.
+# The loader dedupes API entries by URL, not name, so both load when the
+# pack is installed; workspace-tier entries are learned first, so this
+# entry wins the shared `brave` gateway namespace. The specs are kept
+# identical — if you change brave.yaml here, change pack-research's copy
+# too (and vice versa).
+- url: brave.yaml
+  name: brave
+  type: openapi
+  auth: api-key
+  token-env: BRAVE_API_KEY
