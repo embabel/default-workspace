@@ -1,0 +1,55 @@
+# On-demand RELEVANCE join to an ingested DOCUMENT — the canonical embabel-agent RAG `Document` node
+# (a `ContentRoot`: identity `id`, with `title` / `uri` / `ingestionTimestamp`). A relevance search runs over
+# the document's chunks and rolls each hit UP to its parent Document via the real `(:Chunk)-[:PART_OF]->(:Document)`
+# edge, deduped by document id — so a query returns DOCUMENTS, not chunks, and `count(DISTINCT d)` counts
+# documents. Materialized transiently when a query traverses to it, then rolled back. See specs/VIRTUAL_CYPHER.md.
+#
+# A free-text `Concept` anchors the edge (its `value` is the search text). The edge is reachable two ways,
+# selected by the query edge's `via`:
+#   SEMANTIC (default / via:'vector') — "documents that CONCERN X" (aboutness, vector cosine):
+#     MATCH (:Concept {value:'dogs'})-[:RELEVANT_TO]->(d:Document)
+#     WHERE d.ingestionTimestamp >= date('2026-07-01') RETURN d.title
+#   LEXICAL (via:'keyword') — "documents that MENTION X" (exact tokens, fulltext). Boolean structure over
+#   seeds belongs to the GRAPH: "documents mentioning BOTH X and Y" is two seeds meeting at one Document —
+#   the graph does the AND, never a single blended vector:
+#     MATCH (:Concept {value:'risk management'})-[:RELEVANT_TO {via:'keyword'}]->(d:Document)
+#     MATCH (:Concept {value:'lotteries'})-[:RELEVANT_TO {via:'keyword'}]->(d)
+#     RETURN d.title
+#
+# NOTE: a `Document` is ALSO a persisted node with real structural edges to entities you know — who OWNS it
+# `(me:AssistantUser)<-[:OWNED_BY]-(d)`, who WROTE it `(:Person {name})<-[:AUTHORED_BY]-(d)`, and which known
+# people/orgs it references `(:Person|:Organization {name})<-[:MENTIONS]-(d)`. Those are plain persisted
+# traversals from a bound entity; the RELEVANT_TO paths above are for FREE-TEXT topics/terms, not named
+# entities. (Structural-generation guidance is being tuned separately to avoid regressing the relevance path.)
+- name: Document
+  visibility: internal
+  userAnchor: false
+  description: "A document in YOUR OWN ingested knowledge base (a RAG ContentRoot), fetched on demand by relevance search over its chunks and rolled up to the document. These documents are ALREADY yours — implicitly scoped to you — so \"my/your documents\" needs NO ownership, sharing, or file-provenance edge; NEVER add such a constraint. Reach a Document ONLY from a free-text Concept via RELEVANT_TO, then optionally filter by its OWN properties (e.g. ingestionTimestamp)."
+  virtualJoins:
+    # Default / semantic. A plain (no-`via`) edge selects THIS join (vector). `via:'vector'` also selects it.
+    - anchorLabel: Concept
+      relationship: RELEVANT_TO
+      via: vector
+      keyField: value          # the free-text topic/idea is embedded for similarity
+      recordKeyField: matchedFor
+      producer: documentsVector
+      description: "SEMANTIC relevance (vector) of a document to a FREE-TEXT topic — \"documents ABOUT / that concern X\". The Concept is seeded from a query literal, e.g. (:Concept {value:'dogs'})-[:RELEVANT_TO]->(:Document). Aboutness, not exact mention. Per-match data is on the EDGE: r.score, r.snippet (the matching excerpt), r.mode, r.rank — read/ORDER BY these, not a node property."
+    # Lexical. `via:'keyword'` selects THIS join — exact-token match, the honest fit for \"MENTIONS X\".
+    - anchorLabel: Concept
+      relationship: RELEVANT_TO
+      via: keyword
+      keyField: value
+      recordKeyField: matchedFor
+      producer: documentsKeyword
+      description: "LEXICAL relevance (fulltext, exact tokens) — \"documents that MENTION X\". Pin via:'keyword' on the edge, e.g. (:Concept {value:'lotteries'})-[:RELEVANT_TO {via:'keyword'}]->(:Document). For \"mentions BOTH X and Y\", write two such edges converging on the same Document. Per-match data is on the EDGE: r.score, r.snippet, r.mode, r.rank."
+  properties:
+    id:
+      description: "Document id (RAG ContentRoot identity) — the node identity."
+      metadata:
+        identity: "true"
+    title: "The document's title."
+    uri: "The document's URI/source location."
+    ingestionTimestamp: "When the document was ingested (ISO-8601) — filter recency with this, e.g. WHERE d.ingestionTimestamp >= date('…')."
+    # Per-match data (the matching excerpt/score/mode/rank) is NOT a node property — it lives on the
+    # RELEVANT_TO edge (r.snippet / r.score / r.mode / r.rank), because a document reached by several anchors
+    # dedups to ONE node and a node property would be clobbered. Read the excerpt as r.snippet.

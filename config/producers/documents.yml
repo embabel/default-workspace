@@ -1,0 +1,20 @@
+# Relevance producers backing the on-demand Concept -[:RELEVANT_TO]-> Document joins. Both run through the
+# in-tree DocumentRelevanceSource (index: documents), which searches the user's document chunks and rolls
+# each hit up to its parent Document via (:Chunk)-[:PART_OF]->(:Document). Per-user scoped by the chunk's
+# `ingestedBy` metadata (vector search bypasses the Cypher scope rewriter). The relevance score lands on the
+# RELEVANT_TO edge (query it as r.score). k is documents (deduped), not chunks.
+#
+# Two kinds over the SAME index — the query's `via` selects between them at the edge:
+#   documentsVector  (kind: vector)  — SEMANTIC aboutness (cosine).      via:'vector' / default
+#   documentsKeyword (kind: keyword) — LEXICAL exact-token (fulltext).   via:'keyword'
+- name: documentsVector
+  kind: vector
+  index: documents
+  k: 8
+  minScore: 0.0
+
+- name: documentsKeyword
+  kind: keyword
+  index: documents
+  k: 8
+  minScore: 0.0

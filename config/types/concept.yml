@@ -1,0 +1,16 @@
+# A free-text idea/topic used to ANCHOR semantic relevance edges. It has no stored
+# data: a query pins it with a literal (e.g. `(:Concept {value:'cars'})`), the engine
+# seeds it transiently, and its `value` is the text embedded for similarity search.
+# This is the GENERAL relevance anchor — point it at any indexed target via RELEVANT_TO.
+#
+#   MATCH (c:Concept {value:'cars'})-[r:RELEVANT_TO]->(t:RelevantEmailThread)
+#   RETURN t.subject, t.participantNames, r.score ORDER BY r.score DESC
+#
+# See specs/VIRTUAL_CYPHER.md.
+- name: Concept
+  visibility: internal
+  userAnchor: false
+  description: "A free-text idea or topic (e.g. 'cars', 'pricing'), seeded from a query literal, used to anchor semantic RELEVANT_TO edges to any indexed content. Has no stored data — `value` is the text embedded for similarity."
+  properties:
+    value:
+      description: "The free-text concept/topic. Embedded for similarity search; pin it with a literal, e.g. (:Concept {value:'cars'})."

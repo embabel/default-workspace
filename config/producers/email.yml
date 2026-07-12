@@ -1,0 +1,16 @@
+# Vector (semantic) producers backing on-demand email joins.
+#
+# `relatedThreads` runs through the in-tree EmailThreadVectorSource (index:
+# email_threads), which vector-searches the user's email-thread summaries via the
+# workspace store — per-user scoped (the userId filter is the privacy boundary,
+# since vector search bypasses the Cypher scope rewriter). Works for ANY workspace:
+# email-thread summaries + the source are core, no per-user config. The similarity
+# score lands on the RELEVANT_TO edge (query it as r.score).
+# minScore 0.0 (no floor): the anchor text is a short name/subject, which embeds
+# far from topical thread-summary vectors — a high floor returns nothing. Rely on
+# top-k + ORDER BY r.score so the caller judges relevance from the score.
+- name: relatedThreads
+  kind: vector
+  index: email_threads
+  k: 8
+  minScore: 0.0
