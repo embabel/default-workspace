@@ -1,0 +1,92 @@
+# Memory views — the user's long-term memory (DICE propositions: durable facts
+# the assistant has learned about them) exposed as parameterized views, so the
+# Cypher Console / kg_query can answer "what do you know about …" questions
+# structurally. Same subset-view contract as examples.yml: each body is
+# `MATCH … [WHERE …] RETURN <singleNodeVar>` whose rows ARE :Proposition nodes.
+#
+# Privacy + curation are enforced by the scope rewriter on the EXPANDED body,
+# not by these queries: results are always the acting user's own memories, and
+# ACTIVE facts only — `stale_memories` opts into STALE explicitly, and
+# known-false (CONTRADICTED) rows can never be returned by any of them.
+
+- name: my_memories
+  description: "What the assistant remembers about you — newest first, with an optional text filter."
+  params:
+    contains:
+      type: string
+      default: ""
+      description: "Only memories whose text contains this (case-insensitive)."
+    limit:
+      type: int
+      default: 25
+      description: "Maximum memories to return."
+  cypher: |
+    MATCH (p:Proposition)
+    WHERE $contains = '' OR toLower(p.text) CONTAINS toLower($contains)
+    WITH p ORDER BY p.created DESC LIMIT $limit RETURN p
+
+- name: recent_memories
+  description: "Memories learned in the last N days, newest first."
+  params:
+    days:
+      type: int
+      default: 30
+      description: "How many days back to look."
+    limit:
+      type: int
+      default: 25
+      description: "Maximum memories to return."
+  cypher: |
+    MATCH (p:Proposition)
+    WHERE p.created >= datetime() - duration({days: $days})
+    WITH p ORDER BY p.created DESC LIMIT $limit RETURN p
+
+# The about-views match BOTH mention surfaces. Most memories name the entity only in
+# their TEXT (plus an unresolved :Mention satellite) — resolved MENTIONS edges are the
+# minority — so text-contains is the high-recall arm; the EXISTS arm adds memories whose
+# text never names the entity but whose mention was resolved to the canonical node.
+#
+# They also include STALE explicitly (a recall surface: a decayed fact — "X works for Y"
+# learned a year ago — is usually still what the user is asking for; live data is
+# majority-STALE after decay sweeps). SUPERSEDED is excluded (a better version exists and
+# is the ACTIVE row); CONTRADICTED can never be returned regardless (rewriter-enforced).
+# ACTIVE facts sort first.
+- name: memories_about_person
+  description: "Memories that mention a person — 'what do you know about <name>'. Includes decayed (stale) facts, current first."
+  params:
+    name:
+      type: string
+      description: "The person's name, or part of it (case-insensitive)."
+  cypher: |
+    MATCH (p:Proposition)
+    WHERE p.status IN ['ACTIVE', 'STALE']
+      AND (toLower(p.text) CONTAINS toLower($name)
+       OR EXISTS { MATCH (p)-[:MENTIONS]->(e:Person) WHERE toLower(e.name) CONTAINS toLower($name) })
+    WITH p ORDER BY CASE p.status WHEN 'ACTIVE' THEN 0 ELSE 1 END, p.created DESC
+    RETURN p
+
+- name: memories_about_organization
+  description: "Memories that mention an organization — 'what do you know about <company>'. Includes decayed (stale) facts, current first."
+  params:
+    name:
+      type: string
+      description: "The organization's name, or part of it (case-insensitive)."
+  cypher: |
+    MATCH (p:Proposition)
+    WHERE p.status IN ['ACTIVE', 'STALE']
+      AND (toLower(p.text) CONTAINS toLower($name)
+       OR EXISTS { MATCH (p)-[:MENTIONS]->(e:Organization) WHERE toLower(e.name) CONTAINS toLower($name) })
+    WITH p ORDER BY CASE p.status WHEN 'ACTIVE' THEN 0 ELSE 1 END, p.created DESC
+    RETURN p
+
+- name: stale_memories
+  description: "Outdated memories the assistant no longer relies on — an audit view. Known-false (contradicted) memories are never shown."
+  params:
+    limit:
+      type: int
+      default: 25
+      description: "Maximum memories to return."
+  cypher: |
+    MATCH (p:Proposition)
+    WHERE p.status = 'STALE'
+    WITH p ORDER BY p.created DESC LIMIT $limit RETURN p
