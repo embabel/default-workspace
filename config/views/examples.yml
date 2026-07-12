@@ -16,6 +16,26 @@
   cypher: |
     MATCH (me:AssistantUser)<-[:OWNED_BY]-(d:Document) RETURN d
 
+# A PARAMETERIZED view: declared bind variables, with defaults, referenced as `$name` in the body
+# (specs/PARAMETERIZED_VIEWS_MCP.md §3). Referenced bare it runs with the defaults; an inline map on the
+# label supplies overrides — MATCH (p:recent_correspondents {limit: 3}) RETURN p.name — and the console
+# renders the params as a small form, defaults prefilled.
+- name: recent_correspondents
+  description: "People you have emailed, capped — tune the cap without editing Cypher."
+  params:
+    limit:
+      type: int
+      default: 5
+      description: "Maximum people to return."
+    nameContains:
+      type: string
+      default: ""
+      description: "Only people whose name contains this text."
+  cypher: |
+    MATCH (me:AssistantUser)-[:EMAILED]->(p:Person)
+    WHERE $nameContains = '' OR toLower(p.name) CONTAINS toLower($nameContains)
+    WITH p LIMIT $limit RETURN p
+
 # A MATERIALISED view: its result nodes are cached (committed) and a reference reads the cache instead of
 # re-running the body, until the TTL expires — then the next reference recomputes. Same label usage as a
 # regular view; only the caching differs. Useful for expensive bodies (e.g. an agentic-rag traversal).
