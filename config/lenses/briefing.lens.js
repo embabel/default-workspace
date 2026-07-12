@@ -201,6 +201,7 @@ class BriefingLens extends Lens {
       { label: "Deadlines", type: "Bill" },
       { label: "In focus", type: "Person" }
     ];
+    brief.kind = "Briefing";
     const focus = Array.from(new Set(focusIds.filter(Boolean))).map((id) => ({ id }));
     return { focus, data: brief };
   }

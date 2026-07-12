@@ -1,5 +1,5 @@
 import { Lens, hours } from "@embabel/runtime-types";
-import type { LensResult, EntityRef } from "@embabel/runtime-types";
+import type { LensResult, EntityRef, DomainObject } from "@embabel/runtime-types";
 
 /**
  * The daily briefing as a typed program lens. Same pipeline as the cypherscript
@@ -30,7 +30,12 @@ interface BriefSection {
   type: string;
 }
 
-interface BriefingView {
+// A first-class domain type (kind "Briefing") — the planner / GOAP actions can
+// react to a produced briefing, not just its focused entities. `kind` must match
+// the lens spec's `dataType:` exactly. (Distinct from the render presentKind
+// "brief".)
+interface BriefingView extends DomainObject {
+  kind: "Briefing";
   date: string;
   headline: string;
   dek: string;
@@ -249,6 +254,9 @@ export class BriefingLens extends Lens<BriefingParams, BriefingView> {
       { label: "Deadlines", type: "Bill" },
       { label: "In focus", type: "Person" },
     ];
+    // Domain-type identity (must equal the spec's dataType). The render presentKind
+    // ("brief") is stamped separately by the host driver onto the presentation.
+    brief.kind = "Briefing";
 
     const focus: EntityRef[] = Array.from(new Set(focusIds.filter(Boolean))).map((id) => ({ id }));
     return { focus, data: brief as BriefingView };

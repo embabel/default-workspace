@@ -24,3 +24,6 @@ spec:
   className: BriefingLens
   module: briefing.lens.js
   presentKind: brief
+  # Domain-type identity of the data payload (the TS BriefingView's `kind`). Lets
+  # GOAP actions react to a produced Briefing. MUST equal the TS `kind` exactly.
+  dataType: Briefing
