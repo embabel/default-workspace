@@ -2,7 +2,7 @@
 version: 1
 
 # Active personality — directory name under behaviour/personalities/
-activePersonality: marvin
+activePersonality: adaptive
 
 # Runtime LLMs are selected by ROLE (mapped to a model in Settings → LLM
 # Roles / application.yml embabel.models.llms). The roles below resolve to
