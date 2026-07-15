@@ -1,0 +1,26 @@
+# The discord.message signal type: messages received from Discord land as signals
+# with this shape, and the memory markers below tell the platform which fields feed
+# memory extraction.
+#
+# TODO(pack-extraction): move this declaration into pack-discord's types/ directory
+# once packs own their channel declarations end-to-end. It lives here for now because
+# the host-side connector — not the pack — produces these signals, so the schema
+# stays version-locked with the platform release.
+- name: discord.message
+  description: "A message received from a Discord channel via the bot connection"
+  visibility: internal
+  userAnchor: false
+  properties:
+    content:
+      description: "Message text"
+      metadata: { memoryContent: "true" }
+    author_id:
+      description: "Author's Discord snowflake id"
+      metadata: { memoryAuthor: "true" }
+    author_name:
+      description: "Author's display name"
+    channel_id:
+      description: "Discord channel id — the conversation key"
+      metadata: { memoryConversationKey: "true" }
+    url:
+      description: "Deep link to the message (https://discord.com/channels/...)"
