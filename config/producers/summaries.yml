@@ -1,0 +1,25 @@
+# Graph-cached document summarization backing (d:Document)-[:HAS_SUMMARY]->(s:Summary).
+# The aggregate producer collects the document's chunks (incoming PART_OF), reduces them with the
+# `summarize` LLM aggregation, and — cache kind graph — persists the result as a real, scope-stamped
+# Summary node keyed by (document, wordcount band). While the document's chunks are unchanged a repeat
+# traversal is a graph hit with ZERO model calls; the node regenerates in place exactly when the chunks
+# (or the reduce fingerprint) change. Query directives: {ai: {wordcount: N}} selects a persisted band
+# (gist ~40 / standard ~200 / long ~600 words); {ai: {fresh: true}} bypasses the hash check and writes
+# through; a hint/voice steer makes the result transient (never persisted).
+- name: docSummary
+  kind: aggregate
+  edgeType: HAS_SUMMARY
+  collect:
+    targetLabel: Chunk
+    via: PART_OF
+    incoming: true
+    anchorLabel: Document
+    anchorKeyProperty: uri
+    text: "{{ text }}"
+  reduce:
+    using: summarize
+    into: summary
+    args: ["Summarize this document faithfully for its owner. Cover the main findings, sections, and any figures or totals that matter."]
+  identityField: id
+  anchorKeyField: docUri
+  cache: { kind: graph }

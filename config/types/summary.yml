@@ -1,0 +1,28 @@
+# A cached summary of one of YOUR documents — materialized on first traversal of
+# (d:Document)-[:HAS_SUMMARY]->(s:Summary), persisted in the graph (cache kind graph on the producer),
+# and served from there with zero model calls while the document's chunks are unchanged. One node per
+# (document, wordcount band): gist (~40 words), standard (~200, the directive-free default), long (~600).
+#   MATCH (:Concept {value:'inspection'})-[:RELEVANT_TO]->(d:Document)
+#   MATCH (d)-[:HAS_SUMMARY]->(s:Summary) RETURN s.summary
+#   MATCH (d:Document {uri:'…'})-[:HAS_SUMMARY {ai: {wordcount: 40}}]->(s:Summary) RETURN s.summary
+- name: Summary
+  visibility: internal
+  userAnchor: false
+  description: "A summary of one of YOUR ingested documents, generated on demand and cached in the graph per wordcount band. Reach it ONLY from a bound Document via HAS_SUMMARY — e.g. MATCH (d:Document …)-[:HAS_SUMMARY]->(s:Summary) RETURN s.summary. Pick a length with {ai: {wordcount: 40}} (gist) or 600 (long); the default is ~200 words. {ai: {fresh: true}} forces regeneration."
+  virtualJoins:
+    - anchorLabel: Document
+      relationship: HAS_SUMMARY
+      keyField: uri
+      recordKeyField: docUri
+      producer: docSummary
+      description: "On-demand, graph-cached summary of the anchored document's chunks. First traversal generates and persists; repeats are plain graph hits until the document changes."
+  properties:
+    id:
+      description: "Synthesized identity — producer:owner:documentUri:band. One node per (document, band)."
+      metadata:
+        identity: "true"
+    docUri: "URI of the summarized document (= the anchor's uri)."
+    summary: "The summary text at this node's band."
+    band: "Wordcount band: gist (~40), standard (~200, default), long (~600)."
+    count: "How many chunks were reduced."
+    generatedAt: "When this summary was generated (ISO-8601)."
