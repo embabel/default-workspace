@@ -49,7 +49,8 @@ interface BriefingView extends DomainObject {
 
 /** The gateway slice this lens uses, typed locally (cf. pack types' `api` getter). */
 interface BriefingGateway {
-  kg: { query(a: { cypher: string; params: string }): Promise<any[]> };
+  // kg.query returns the unconditional {rows, warnings} envelope (embabel/me#498).
+  kg: { query(a: { cypher: string; params: string }): Promise<{ rows: any[]; warnings: string[] }> };
   ai: {
     classify(a: { instruction: string; items: string[]; categories: string; role: string }): Promise<any[]>;
     complete(a: { prompt: string; role: string }): Promise<any>;
@@ -69,6 +70,8 @@ export class BriefingLens extends Lens<BriefingParams, BriefingView> {
   async retrieve(): Promise<LensResult<BriefingView>> {
     const gateway = this.api;
     const lensArgs = this.params || {};
+    // Unwrap the {rows, warnings} envelope once — every read below wants the rows.
+    const kg = async (a: { cypher: string; params: string }) => (await gateway.kg.query(a)).rows;
 
     const today = new Date().toISOString().slice(0, 10);
     const days = lensArgs.lookbackDays ? lensArgs.lookbackDays : 30;
@@ -77,7 +80,7 @@ export class BriefingLens extends Lens<BriefingParams, BriefingView> {
       : new Date(Date.now() - days * 86400000).toISOString();
 
     // 1. Selection: recent email signals in the window.
-    let rows = await gateway.kg.query({
+    let rows = await kg({
       cypher: `MATCH (s:EmailSignal) WHERE s.lastMessageAt > $since
                RETURN s.id AS id, s.subject AS subject, s.from AS sender,
                       coalesce(s.messageCount, 1) AS msgs,
@@ -87,7 +90,7 @@ export class BriefingLens extends Lens<BriefingParams, BriefingView> {
     });
 
     // 2. Me — id (EMAILED salience) + addresses (skip threads I answered last).
-    const meRows = await gateway.kg.query({
+    const meRows = await kg({
       cypher: `MATCH (me:AssistantUser) RETURN me.id AS id, me.email AS email, me.emails AS others, me.timeZone AS timeZone`,
       params: JSON.stringify({}),
     });
@@ -121,7 +124,7 @@ export class BriefingLens extends Lens<BriefingParams, BriefingView> {
     // Upcoming meetings — next 7 days, deterministic, formatted in user's zone.
     const nowIso = new Date().toISOString();
     const weekEndIso = new Date(Date.now() + 7 * 86400000).toISOString();
-    const meetRows = await gateway.kg.query({
+    const meetRows = await kg({
       cypher: `MATCH (m:MeetingSignal) WHERE m.start >= $now AND m.start <= $weekEnd
                RETURN m.id AS id, m.subject AS title, m.start AS start, m.location AS location, m.timeZone AS tz
                ORDER BY m.start ASC LIMIT 8`,
@@ -137,7 +140,7 @@ export class BriefingLens extends Lens<BriefingParams, BriefingView> {
     // email so a quiet inbox (or a meeting-only day) still surfaces what's owed.
     const floor = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
     const weekEnd = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
-    const billRows = await gateway.kg.query({
+    const billRows = await kg({
       cypher: `MATCH (bill:Bill) WHERE coalesce(bill.isPaid, false) = false AND bill.dueDate >= $floor
                OPTIONAL MATCH (bill:Bill)-[:BILLED_BY]->(org:Organization)
                RETURN bill.id AS id, bill.name AS name, bill.dueDate AS due, bill.amount AS amount, bill.currency AS ccy, org.name AS vendor
@@ -166,7 +169,7 @@ export class BriefingLens extends Lens<BriefingParams, BriefingView> {
       const keptIds = kept.map((r) => r.id);
 
       // DETERMINISTIC RANKING of the email threads.
-      const enrich = await gateway.kg.query({
+      const enrich = await kg({
         cypher: `MATCH (e:EmailSignal) WHERE e.id IN $ids
                  OPTIONAL MATCH (e:EmailSignal)-[:HAS_PARTICIPANT]->(p:Person)
                  OPTIONAL MATCH (me:Person {id:$meId})-[r:EMAILED]->(p:Person)
@@ -179,7 +182,7 @@ export class BriefingLens extends Lens<BriefingParams, BriefingView> {
       });
       const eById: Record<string, any> = {}; (enrich || []).forEach((x: any) => eById[x.id] = x);
 
-      const promoRows = await gateway.kg.query({
+      const promoRows = await kg({
         cypher: `MATCH (u:UnsubscribePossibility) RETURN collect(DISTINCT toLower(u.senderAddress)) AS addrs`,
         params: JSON.stringify({}),
       });
@@ -199,7 +202,7 @@ export class BriefingLens extends Lens<BriefingParams, BriefingView> {
       kept.sort((a, b) => b.score - a.score);
       kept.forEach((r) => { r.priority = r.score >= 0.45 ? "high" : (r.score >= 0.15 ? "medium" : "low"); });
 
-      const ent = await gateway.kg.query({
+      const ent = await kg({
         cypher: `MATCH (e:EmailSignal) WHERE e.id IN $ids
                  OPTIONAL MATCH (e:EmailSignal)-[:HAS_PARTICIPANT]->(person:Person)
                  OPTIONAL MATCH (e:EmailSignal)-[:HAS_PARTICIPANT]->(org:Organization)

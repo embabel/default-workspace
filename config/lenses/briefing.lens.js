@@ -12,10 +12,11 @@ class BriefingLens extends Lens {
   async retrieve() {
     const gateway = this.api;
     const lensArgs = this.params || {};
+    const kg = async (a) => (await gateway.kg.query(a)).rows;
     const today = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
     const days = lensArgs.lookbackDays ? lensArgs.lookbackDays : 30;
     const since = lensArgs.since ? lensArgs.since : new Date(Date.now() - days * 864e5).toISOString();
-    let rows = await gateway.kg.query({
+    let rows = await kg({
       cypher: `MATCH (s:EmailSignal) WHERE s.lastMessageAt > $since
                RETURN s.id AS id, s.subject AS subject, s.from AS sender,
                       coalesce(s.messageCount, 1) AS msgs,
@@ -23,7 +24,7 @@ class BriefingLens extends Lens {
                ORDER BY s.lastMessageAt DESC LIMIT 40`,
       params: JSON.stringify({ since })
     });
-    const meRows = await gateway.kg.query({
+    const meRows = await kg({
       cypher: `MATCH (me:AssistantUser) RETURN me.id AS id, me.email AS email, me.emails AS others, me.timeZone AS timeZone`,
       params: JSON.stringify({})
     });
@@ -61,7 +62,7 @@ class BriefingLens extends Lens {
     }
     const nowIso = (/* @__PURE__ */ new Date()).toISOString();
     const weekEndIso = new Date(Date.now() + 7 * 864e5).toISOString();
-    const meetRows = await gateway.kg.query({
+    const meetRows = await kg({
       cypher: `MATCH (m:MeetingSignal) WHERE m.start >= $now AND m.start <= $weekEnd
                RETURN m.id AS id, m.subject AS title, m.start AS start, m.location AS location, m.timeZone AS tz
                ORDER BY m.start ASC LIMIT 8`,
@@ -84,7 +85,7 @@ class BriefingLens extends Lens {
     let focusIds = (meetRows || []).map((m) => m.id).filter(Boolean);
     const floor = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
     const weekEnd = new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10);
-    const billRows = await gateway.kg.query({
+    const billRows = await kg({
       cypher: `MATCH (bill:Bill) WHERE coalesce(bill.isPaid, false) = false AND bill.dueDate >= $floor
                OPTIONAL MATCH (bill:Bill)-[:BILLED_BY]->(org:Organization)
                RETURN bill.id AS id, bill.name AS name, bill.dueDate AS due, bill.amount AS amount, bill.currency AS ccy, org.name AS vendor
@@ -114,7 +115,7 @@ class BriefingLens extends Lens {
       let items = [];
       if (kept.length) {
         const keptIds = kept.map((r) => r.id);
-        const enrich = await gateway.kg.query({
+        const enrich = await kg({
           cypher: `MATCH (e:EmailSignal) WHERE e.id IN $ids
                  OPTIONAL MATCH (e:EmailSignal)-[:HAS_PARTICIPANT]->(p:Person)
                  OPTIONAL MATCH (me:Person {id:$meId})-[r:EMAILED]->(p:Person)
@@ -127,7 +128,7 @@ class BriefingLens extends Lens {
         });
         const eById = {};
         (enrich || []).forEach((x) => eById[x.id] = x);
-        const promoRows = await gateway.kg.query({
+        const promoRows = await kg({
           cypher: `MATCH (u:UnsubscribePossibility) RETURN collect(DISTINCT toLower(u.senderAddress)) AS addrs`,
           params: JSON.stringify({})
         });
@@ -147,7 +148,7 @@ class BriefingLens extends Lens {
         kept.forEach((r) => {
           r.priority = r.score >= 0.45 ? "high" : r.score >= 0.15 ? "medium" : "low";
         });
-        const ent = await gateway.kg.query({
+        const ent = await kg({
           cypher: `MATCH (e:EmailSignal) WHERE e.id IN $ids
                  OPTIONAL MATCH (e:EmailSignal)-[:HAS_PARTICIPANT]->(person:Person)
                  OPTIONAL MATCH (e:EmailSignal)-[:HAS_PARTICIPANT]->(org:Organization)

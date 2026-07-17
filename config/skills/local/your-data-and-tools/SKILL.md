@@ -20,7 +20,9 @@ elsewhere — the data and the integrations are reachable here.
    three bindings in one program; use whichever the task needs:
    - `gateway.kg.query(cypher, params)` — read-only Cypher over the user's
      knowledge graph (people, email, companies, bills, meetings). Per-user
-     scoped automatically.
+     scoped automatically. Returns `{rows, warnings}` — destructure `rows`;
+     non-empty `warnings` means a backing source failed, so read few/zero
+     rows as "source unavailable", not "no data".
    - `gateway.*` — the user's connected integrations (e.g. fetch an actual
      email, read a CRM record, list repo activity). Use these when the answer
      needs live data the graph doesn't hold.
