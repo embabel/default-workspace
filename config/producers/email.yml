@@ -14,3 +14,14 @@
   index: email_threads
   k: 8
   minScore: 0.0
+
+# `participantThreads` is the FACTUAL sibling: threads the anchor actually PARTICIPATES in, matched
+# by email address against the summary's `participantEmails` — never by name similarity. "What do I
+# discuss with X" routes here; embedding a bare person NAME retrieves whatever prose sits near the
+# name in vector space (a famous namesake's subject matter), which fabricates discussions the person
+# was never part of. The join keys on an identity property so the engine broadens it to every alias.
+- name: participantThreads
+  kind: participant
+  index: email_threads
+  k: 25
+  identityField: participantEmails
