@@ -24,7 +24,7 @@
 - name: Document
   visibility: internal
   userAnchor: false
-  description: "A document in YOUR OWN ingested knowledge base (a RAG ContentRoot), fetched on demand by relevance search over its chunks and rolled up to the document. These documents are ALREADY yours — implicitly scoped to you — so \"my/your documents\" needs NO ownership, sharing, or file-provenance edge; NEVER add such a constraint. Reach a Document ONLY from a free-text Concept via RELEVANT_TO, then optionally filter by its OWN properties (e.g. ingestionTimestamp)."
+  description: "A document in YOUR OWN ingested knowledge base (a RAG ContentRoot), fetched on demand by relevance search over its chunks and rolled up to the document. These documents are ALREADY yours — implicitly scoped to you — so \"my/your documents\" needs NO ownership, sharing, or file-provenance edge; NEVER add such a constraint. ONLY ingested content is here: public-world material (a speech, a video, news, a paper) is ABSENT unless the user ingested it — for such content prefer a schema path that FETCHES from a live public source, when one exists. Reach a Document ONLY from a free-text Concept via RELEVANT_TO, then optionally filter by its OWN properties (e.g. ingestionTimestamp). A Document node carries only METADATA (title, uri, timestamps) — never its text. To SUMMARIZE a document or report on its content, traverse (d)-[:HAS_SUMMARY]->(s:Summary) and RETURN s.summary; NEVER apply summarize() to d.title or d.uri (a title is not content)."
   virtualJoins:
     # Default / semantic. A plain (no-`via`) edge selects THIS join (vector). `via:'vector'` also selects it.
     - anchorLabel: Concept
@@ -33,7 +33,7 @@
       keyField: value          # the free-text topic/idea is embedded for similarity
       recordKeyField: matchedFor
       producer: documentsVector
-      description: "SEMANTIC relevance (vector) of a document to a FREE-TEXT topic — \"documents ABOUT / that concern X\". The Concept is seeded from a query literal, e.g. (:Concept {value:'dogs'})-[:RELEVANT_TO]->(:Document). Aboutness, not exact mention. Per-match data is on the EDGE: r.score, r.snippet (the matching excerpt), r.mode, r.rank — read/ORDER BY these, not a node property."
+      description: "SEMANTIC relevance (vector) of a document to a FREE-TEXT topic — \"documents ABOUT / that concern X\" — searching ONLY what the user has INGESTED; public-world content never ingested will simply MISS here. The Concept is seeded from a query literal, e.g. (:Concept {value:'dogs'})-[:RELEVANT_TO]->(:Document). Aboutness, not exact mention. Per-match data is on the EDGE: r.score, r.snippet (the matching excerpt), r.mode, r.rank — read/ORDER BY these, not a node property. To SUMMARIZE a found document's content, continue (d)-[:HAS_SUMMARY]->(s:Summary) and RETURN s.summary — never summarize() over d.title or r.snippet."
     # Lexical. `via:'keyword'` selects THIS join — exact-token match, the honest fit for \"MENTIONS X\".
     - anchorLabel: Concept
       relationship: RELEVANT_TO
