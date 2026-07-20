@@ -5,56 +5,56 @@ description: Build a single-page HTML app — dashboard, viewer, tracker, mini-a
 
 # Vibe Coder (HTML App Builder)
 
-> **Use `gateway.htmlCoder.htmlCoder({ request })`** — the namespace is
-> `htmlCoder`, the entry-point method is also named `htmlCoder`. The
-> other 8 methods on this namespace are the inner agent's helpers, not
-> for you.
+You build the app YOURSELF and submit it. There is no "app builder tool" that
+writes the HTML for you — **you** are the coder. Two tools:
 
-The vibe coder runs its OWN inner LLM loop that:
-- Reads the user's request
-- Discovers the relevant workspace tools (via `toolSummary` / `listFiles`)
-- Generates the HTML
-- Bakes the data into the page
-- Saves the artifact (renders at `/apps/{name}.html`)
+1. **`vibe_app_brief({ request })`** → returns this workspace's app-building brief:
+   the conventions (single self-contained `.html`, backend calls via the typed
+   `gateway.*` surface — never a direct external `fetch`), the theme, the existing
+   apps, and the typed tool surface. Read it, then write the complete single-file
+   HTML against it.
+2. **`vibe_app_save({ name, html })`** → validates your HTML (no external fetch,
+   escaped output, banner, etc.), serves it at `/apps/<name>`, and returns the URL.
+   On rejection it returns the violations — fix them and call again.
 
-You just call `htmlCoder({ request })` with the user's brief in plain
-English. The inner loop handles the rest.
+```ts
+vibe_app_brief({ request: string })           // → the brief (string)
+vibe_app_save({ name: string, html: string }) // → { status, name, url } | { status:"rejected", violations }
+```
 
 ## Method
 
-```ts
-gateway.htmlCoder.htmlCoder({ request: string })
-  // → returns a string describing what was built (filename, URL, summary)
+```
+1. vibe_app_brief({ request: "<the user's request, verbatim>" })
+2. Read the brief. It hands you the typed gateway surface and the conventions.
+3. Write the COMPLETE single-file HTML. The app fetches its OWN data at runtime
+   through gateway.* — do NOT pre-fetch data and bake it in.
+4. TEST the data calls you plan to embed (run each gateway.kg.query / gateway.*
+   call once against the live workspace and confirm the shape) BEFORE saving.
+5. vibe_app_save({ name: "<name>.html", html: "<the full HTML>" }).
+6. If rejected, fix the reported violations and call vibe_app_save again.
 ```
 
 ## Cardinal rules
 
-1. **Don't pre-fetch data.** If the user says "make me an app that
-   shows xkcd plus github issues", call `htmlCoder({ request: "..." })`
-   with that prompt — do NOT first fetch xkcd / issues yourself in JS
-   and pass them in. The vibe coder fetches its own data via gateway.
-2. **Don't write HTML yourself.** No `gateway.artifacts.writeArtifact({type:"apps"})`
-   for new app creation — it bypasses the app builder pipeline. Use
-   vibe-coder for new apps; use `writeArtifact` only for surgical edits
-   to an existing app.
-3. **Pass the user's intent verbatim.** Quoting the user's actual words
-   in `request` is fine — the inner loop is good at interpreting them.
-4. **Surface the result.** The return value is human-readable; forward
-   it to the user (it includes the `/apps/{filename}` URL).
-
-## Pattern
-
-```js
-await platform.send_message("Building your app — this can take a moment...");
-const result = await gateway.htmlCoder.htmlCoder({
-  request: "Make me a dashboard called 'issue-tracker' that lists open issues from embabel/embabel-agent with author and label.",
-});
-await platform.send_message(result);
-```
+1. **You write the HTML.** There is no `htmlCoder` and nothing else authors the
+   app for you. `vibe_app_brief` gives you the brief; you produce the HTML.
+2. **Don't pre-fetch data.** If the user says "an app that shows my ratings," the
+   app calls `gateway.*` at load time — don't fetch the ratings yourself and paste
+   them in. The brief's dynamic-app rule is mandatory.
+3. **Backend calls go through `gateway.*`, never a direct external `fetch`.** The
+   validator rejects direct external fetches.
+4. **Test before you save.** A `gateway.kg.query` you never ran is a runtime error
+   the user hits with no way to repair it. Run your queries first; if the data you
+   expect isn't in a repository collection, it may be knowledge-graph data — reach
+   it with `gateway.kg.query` / `gateway.kg.ask`, not `list_entries`.
+5. **Surface the result.** `vibe_app_save` returns the `/apps/<name>` URL — give it
+   to the user.
 
 ## When to use it (vs alternatives)
 
 - "Make me an app for X" → **vibe-coder** (this skill)
-- "Show me X" as a markdown table or list → just write JS that fetches and `send_message`s
-- "Make a flowchart / sequence diagram" → **diagrams** skill (`gateway.save.diagram`)
-- "Edit my existing app's title" → `gateway.artifacts.writeArtifact` (surgical edit)
+- "Show me X" as a quick table/list → just query and reply; no app needed
+- "Make a flowchart / sequence diagram" → **diagrams** skill
+- "Edit my existing app" → `vibe_app_brief` names the existing apps; re-author and
+  `vibe_app_save` under the same name to replace it
