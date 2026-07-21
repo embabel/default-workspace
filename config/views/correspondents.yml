@@ -1,0 +1,23 @@
+# Canonical CORRESPONDENT AGGREGATE views (TABULAR — they RETURN scalars/aggregates, so they are a
+# report-only result set, not a traversable node subset). These exist to PIN the "who contacts me
+# most" aggregation: the count is done ONCE, inside the view (WITH o, sum(...)), so no caller can
+# fan out the join and over-count. Every model / app / console that runs the view by name gets the
+# SAME, correct ranking.
+#
+# CORE schema only (AssistantUser, Person, Organization + EMAILED, WORKS_FOR) — always present, so
+# this ships safely in every workspace. `(me:AssistantUser)` is NAMED so the scope rewriter binds it
+# to the current user; another user's correspondence never leaks.
+
+- name: top_correspondents
+  description: "Organizations that email you most, ranked by inbound volume (deduped, no fan-out). Rows: {org, inbound, people}."
+  params:
+    limit:
+      type: int
+      default: 10
+      description: "Maximum organizations to return."
+  cypher: |
+    MATCH (me:AssistantUser)-[e:EMAILED]->(p:Person)-[:WORKS_FOR]->(o:Organization)
+    WITH o, sum(e.receivedCount) AS inbound, count(DISTINCT p) AS people
+    RETURN o.name AS org, inbound, people
+    ORDER BY inbound DESC, org ASC
+    LIMIT $limit
