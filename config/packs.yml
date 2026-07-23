@@ -1,8 +1,0 @@
-# Default packs — installed automatically on first workspace setup.
-# Each entry is a git repo to clone into packs/{name}.
-- name: research
-  repo: https://github.com/johnsonr/pack-research.git
-  version: "main"
-- name: github
-  repo: https://github.com/johnsonr/pack-github.git
-  version: "main"
