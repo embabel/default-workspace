@@ -5,7 +5,7 @@
 # SAME, correct ranking.
 #
 # CORE schema only (AssistantUser, Person, Organization + EMAILED, WORKS_FOR) — always present, so
-# this ships safely in every workspace. `(me:AssistantUser)` is NAMED so the scope rewriter binds it
+# this ships safely in every world. `(me:AssistantUser)` is NAMED so the scope rewriter binds it
 # to the current user; another user's correspondence never leaks.
 
 - name: top_correspondents

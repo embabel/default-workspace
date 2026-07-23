@@ -1,7 +1,7 @@
 # On-demand SEMANTIC join: an email thread relevant (by meaning) to an anchor.
 # Materialized transiently when a query traverses to it, then rolled back — nothing
 # persists. Backed by vector search over the user's thread summaries, so it works
-# for any workspace (email is part of the standard model). See specs/VIRTUAL_CYPHER.md.
+# for any world (email is part of the standard model). See specs/VIRTUAL_CYPHER.md.
 #
 #   MATCH (p:Person {name:'Ada Lovelace'})-[r:RELEVANT_TO]->(t:RelevantEmailThread)
 #   RETURN t.subject, t.snippet, r.score ORDER BY r.score DESC

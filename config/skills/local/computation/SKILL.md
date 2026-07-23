@@ -43,9 +43,9 @@ Available built-ins: `crypto`, `fs`, `path`, `url`, `util`, `zlib`,
 plus `fetch`. **Use `require(...)`** — `import` is not enabled.
 
 Use `fs.readdirSync(...)` / `bash_run("ls ~")` to inspect the
-sandbox's own filesystem (`/workspace`, home dir, etc.). The
+sandbox's own filesystem (`/world`, home dir, etc.). The
 sandbox is YOUR runtime — `gateway.artifacts.*` is for the user's
-saved workspace files, NOT for sandbox-fs inspection.
+saved world files, NOT for sandbox-fs inspection.
 
 If the user explicitly asks for Python output and Path B is your only
 option, you have THREE choices in order of preference:
@@ -85,7 +85,7 @@ await platform.send_message("Fibonacci:\n```\n" + out + "```");
 ```
 
 If the user said "save it, then run it" — pick a stable name like
-`/tmp/<thing>.py` (or `/workspace/<thing>.py` if they need to find it
+`/tmp/<thing>.py` (or `/world/<thing>.py` if they need to find it
 later) so the "save" step is real and inspectable.
 
 ### 3. Use `platform.llm` for a one-shot numerical answer

@@ -8,7 +8,7 @@ description: Build a single-page HTML app — dashboard, viewer, tracker, mini-a
 You build the app YOURSELF and submit it. There is no "app builder tool" that
 writes the HTML for you — **you** are the coder. Two tools:
 
-1. **`vibe_app_brief({ request })`** → returns this workspace's app-building brief:
+1. **`vibe_app_brief({ request })`** → returns this world's app-building brief:
    the conventions (single self-contained `.html`, backend calls via the typed
    `gateway.*` surface — never a direct external `fetch`), the theme, the existing
    apps, and the typed tool surface. Read it, then write the complete single-file
@@ -30,7 +30,7 @@ vibe_app_save({ name: string, html: string }) // → { status, name, url } | { s
 3. Write the COMPLETE single-file HTML. The app fetches its OWN data at runtime
    through gateway.* — do NOT pre-fetch data and bake it in.
 4. TEST the data calls you plan to embed (run each gateway.kg.query / gateway.*
-   call once against the live workspace and confirm the shape) BEFORE saving.
+   call once against the live world and confirm the shape) BEFORE saving.
 5. vibe_app_save({ name: "<name>.html", html: "<the full HTML>" }).
 6. If rejected, fix the reported violations and call vibe_app_save again.
 ```

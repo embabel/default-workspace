@@ -1,9 +1,9 @@
 ---
 name: documents
-description: Search the user's ingested documents / uploaded notes / workspace knowledge base — "search my notes", "what do I have on X", or factual questions answerable from stored content.
+description: Search the user's ingested documents / uploaded notes / world knowledge base — "search my notes", "what do I have on X", or factual questions answerable from stored content.
 ---
 
-# Documents (workspace knowledge base)
+# Documents (world knowledge base)
 
 > **If the `reference_docs` tools are in your tool list, USE THOSE — not a
 > script.** Call `reference_docs` once to reveal the inner search tools, then
@@ -29,7 +29,7 @@ single hit doesn't have the full answer.
 ## Cardinal rules
 
 1. **Search before guessing.** If the user asks about something that
-   sounds workspace-specific (a person, a project, a note, a term from an
+   sounds world-specific (a person, a project, a note, a term from an
    uploaded spec), search first. Don't fall back to "I don't have access to
    that information" without trying.
 2. **Phrase the query as the user's actual question.** The full sentence
@@ -45,4 +45,4 @@ single hit doesn't have the full answer.
 - The user asks about external sources (web, GitHub, arXiv) — use the
   matching gateway / skill instead.
 - The user wants to LIST artifacts (apps, diagrams) → `artifacts` skill.
-- The user wants to EDIT a workspace note → the living-documents tools.
+- The user wants to EDIT a world note → the living-documents tools.

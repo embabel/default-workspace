@@ -1,6 +1,6 @@
 # Cron
 
-Scheduled jobs that fire events on a cron schedule. Each `.yml` file defines a single job that triggers a workspace action.
+Scheduled jobs that fire events on a cron schedule. Each `.yml` file defines a single job that triggers a world action.
 
 ```yml
 name: ping

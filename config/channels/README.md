@@ -8,4 +8,4 @@ name: telegram
 token-env: TELEGRAM_BOT_TOKEN
 ```
 
-Use `token-env` to reference an environment variable or workspace secret for the channel credential.
+Use `token-env` to reference an environment variable or world secret for the channel credential.

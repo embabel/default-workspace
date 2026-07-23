@@ -1,9 +1,9 @@
 ---
 name: artifacts
-description: Workspace artifacts — saved generated files (apps, code, datasets, diagrams). For "show my apps", "list diagrams", "delete the X file", "open my dataset", or referencing a generated artifact by name. NOT the JS/Python sandbox's own filesystem (`/workspace/scripts`) — use `fs` / `bash_run("ls ...")` inside execute_* for that.
+description: World artifacts — saved generated files (apps, code, datasets, diagrams). For "show my apps", "list diagrams", "delete the X file", "open my dataset", or referencing a generated artifact by name. NOT the JS/Python sandbox's own filesystem (`/world/scripts`) — use `fs` / `bash_run("ls ...")` inside execute_* for that.
 ---
 
-# Artifacts (workspace-saved files)
+# Artifacts (world-saved files)
 
 > **Use `gateway.artifacts.*`.** Types are `apps`, `code`, `datasets`,
 > `diagrams` (lowercase; matches `/{type}/{name}` URLs).
@@ -24,8 +24,8 @@ to the user (or pass it to `platform.llm` for paraphrasing).
 
 - "List the files in the home directory of the sandbox" → use Node
   `fs.readdirSync(...)` or `bash_run("ls -la ~")`. The sandbox's own
-  filesystem (where your script runs) is **not** workspace artifacts.
-- "What's in `/workspace/...`" → same: sandbox filesystem, not artifacts.
+  filesystem (where your script runs) is **not** world artifacts.
+- "What's in `/world/...`" → same: sandbox filesystem, not artifacts.
 - HTML apps you're CREATING → use vibe-coder (this skill is for editing
   existing ones, not generating new).
 - Diagrams you're RENDERING → use `gateway.save.diagram` (the

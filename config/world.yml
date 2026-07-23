@@ -1,4 +1,4 @@
-# Workspace configuration — overrides application.yml defaults.
+# World configuration — overrides application.yml defaults.
 version: 1
 
 # Active personality — directory name under behaviour/personalities/

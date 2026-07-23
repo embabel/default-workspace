@@ -2,9 +2,9 @@
 # with this shape, and the memory markers below tell the platform which fields feed
 # memory extraction.
 #
-# TODO(pack-extraction): move this declaration into pack-discord's types/ directory
-# once packs own their channel declarations end-to-end. It lives here for now because
-# the host-side connector — not the pack — produces these signals, so the schema
+# TODO(realm-extraction): move this declaration into realm-discord's types/ directory
+# once realms own their channel declarations end-to-end. It lives here for now because
+# the host-side connector — not the realm — produces these signals, so the schema
 # stays version-locked with the platform release.
 - name: discord.message
   description: "A message received from a Discord channel via the bot connection"

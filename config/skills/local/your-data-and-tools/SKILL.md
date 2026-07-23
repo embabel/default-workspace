@@ -13,7 +13,7 @@ elsewhere — the data and the integrations are reachable here.
 
 ## How to answer
 
-1. Call `workspace_context` for the live schema (real labels, properties,
+1. Call `world_context` for the live schema (real labels, properties,
    relationships, virtual joins), the scoping conventions, and the available
    `gateway.*` surface. Do this before writing anything — don't guess at names.
 2. Write a CypherScript program and run it in `code_mode`. CypherScript combines
@@ -51,4 +51,4 @@ elsewhere — the data and the integrations are reachable here.
 - NEVER show or discuss Cypher, queries, schemas, node/edge models, or how the
   data is stored. The user wants the answer, not the implementation.
 - NEVER ask the user how their data is modeled or structured —
-  `workspace_context` already tells you. Figure it out and answer.
+  `world_context` already tells you. Figure it out and answer.

@@ -2,8 +2,8 @@
 #
 # `relatedThreads` runs through the in-tree EmailThreadVectorSource (index:
 # email_threads), which vector-searches the user's email-thread summaries via the
-# workspace store — per-user scoped (the userId filter is the privacy boundary,
-# since vector search bypasses the Cypher scope rewriter). Works for ANY workspace:
+# world store — per-user scoped (the userId filter is the privacy boundary,
+# since vector search bypasses the Cypher scope rewriter). Works for ANY world:
 # email-thread summaries + the source are core, no per-user config. The similarity
 # score lands on the RELEVANT_TO edge (query it as r.score).
 # minScore 0.0 (no floor): the anchor text is a short name/subject, which embeds

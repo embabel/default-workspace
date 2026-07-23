@@ -5,16 +5,16 @@
 # the knowledge graph holds. Replaces the former brave-search Docker MCP
 # server — same capability, no container.
 #
-# Requires `BRAVE_API_KEY` in the workspace credential store or the
+# Requires `BRAVE_API_KEY` in the world credential store or the
 # environment (free tier sufficient for personal use; sign up at
 # https://api.search.brave.com/). If the key is missing the API is
 # skipped at load time — no other chat behaviour is affected.
 #
-# The research pack vendors the same spec under the same `brave` name.
+# The research realm vendors the same spec under the same `brave` name.
 # The loader dedupes API entries by URL, not name, so both load when the
-# pack is installed; workspace-tier entries are learned first, so this
+# realm is installed; world-tier entries are learned first, so this
 # entry wins the shared `brave` gateway namespace. The specs are kept
-# identical — if you change brave.yaml here, change pack-research's copy
+# identical — if you change brave.yaml here, change realm-research's copy
 # too (and vice versa).
 - url: brave.yaml
   name: brave

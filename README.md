@@ -1,3 +1,3 @@
-# Default Workspace
+# Default World
 
-Default Workspace for Embabel Me assistant.
+Default World for Embabel Me assistant.

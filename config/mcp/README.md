@@ -11,4 +11,4 @@
     BRAVE_API_KEY: ${BRAVE_API_KEY}
 ```
 
-Environment variable references in `env` values (e.g. `${BRAVE_API_KEY}`) are resolved from system environment variables or workspace secrets.
+Environment variable references in `env` values (e.g. `${BRAVE_API_KEY}`) are resolved from system environment variables or world secrets.

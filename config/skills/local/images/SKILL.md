@@ -1,6 +1,6 @@
 ---
 name: images
-description: Workspace image management — list, look up, annotate, find by location. For "show my images", "annotate image X", "photos near X", "describe this picture".
+description: World image management — list, look up, annotate, find by location. For "show my images", "annotate image X", "photos near X", "describe this picture".
 ---
 
 # Images
@@ -20,7 +20,7 @@ gateway.images.nearImages({ lat, lon, radius_km? })        // EXIF-GPS-based loc
 
 ## Embedding images in chat
 
-Markdown image syntax embeds a workspace-served image inline. The
+Markdown image syntax embeds a world-served image inline. The
 serving path is `/api/v1/images/<filename>` (substitute the actual
 filename from `listImages` / `getImageDetails`). Build the path with
 string concatenation in your script and emit it via `send_message`.

@@ -11,4 +11,4 @@ OpenAPI definitions for external services the assistant can call. All `.yml` fil
   auth: none
 ```
 
-Auth types: `none`, `bearer`, `api-key`. Use `token-env` to reference an environment variable or workspace secret for the credential value.
+Auth types: `none`, `bearer`, `api-key`. Use `token-env` to reference an environment variable or world secret for the credential value.
